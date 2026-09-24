@@ -1,0 +1,3511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ExamAce — AI-Powered Exam Prep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#07070e;--surface:#0f0f1a;--surface2:#16162a;--surface3:#1e1e35;
+  --border:#ffffff0f;--border2:#ffffff1a;
+  --text:#f0f0ff;--muted:#8888aa;--subtle:#444466;
+  --brand:#7c6af5;--brand2:#a78bfa;--brand-glow:#7c6af533;
+  --green:#22d3a0;--red:#f87171;--amber:#fbbf24;--blue:#60a5fa;--pink:#f472b6;
+  --r:12px;--r2:20px;--r3:28px;
+  --trans:all .2s cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;}
+code,pre{font-family:'JetBrains Mono',monospace;}
+
+/* Layout */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:var(--trans);}
+.main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:50;}
+.content{padding:2rem;flex:1;}
+
+/* Sidebar */
+.logo{padding:1.5rem 1.25rem;display:flex;align-items:center;gap:.75rem;border-bottom:1px solid var(--border);}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--brand),var(--brand2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,#fff,var(--brand2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nav{padding:1rem .75rem;flex:1;display:flex;flex-direction:column;gap:.25rem;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;border-radius:var(--r);cursor:pointer;transition:var(--trans);font-size:.875rem;color:var(--muted);font-weight:500;text-decoration:none;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--brand-glow);color:var(--brand2);border:1px solid var(--brand)33;}
+.nav-item .icon{font-size:1.1rem;width:20px;text-align:center;}
+.sidebar-footer{padding:1rem .75rem;border-top:1px solid var(--border);}
+.student-pill{display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;border-radius:var(--r);background:var(--surface2);}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--pink));display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;font-family:'Syne',sans-serif;flex-shrink:0;}
+.student-info{min-width:0;}
+.student-name{font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.student-exam{font-size:.7rem;color:var(--muted);}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:1.5rem;}
+.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:1.5rem;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;opacity:.06;background:var(--accent-color,var(--brand));}
+.stat-number{font-family:'Syne',sans-serif;font-size:2.25rem;font-weight:800;line-height:1;}
+.stat-label{font-size:.8rem;color:var(--muted);margin-top:.35rem;font-weight:500;}
+.stat-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.72rem;padding:.2rem .5rem;border-radius:20px;margin-top:.5rem;font-weight:600;}
+.badge-green{background:#22d3a020;color:var(--green);}
+.badge-red{background:#f8717120;color:var(--red);}
+.badge-amber{background:#fbbf2420;color:var(--amber);}
+.badge-brand{background:var(--brand-glow);color:var(--brand2);}
+
+/* Grid */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.6rem 1.25rem;border-radius:var(--r);font-size:.875rem;font-weight:600;cursor:pointer;transition:var(--trans);border:none;font-family:'DM Sans',sans-serif;}
+.btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-danger{background:#f8717120;color:var(--red);border:1px solid #f8717133;}
+.btn-sm{padding:.4rem .85rem;font-size:.8rem;}
+.btn-green{background:#22d3a020;color:var(--green);border:1px solid #22d3a033;}
+
+/* Form */
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem;}
+label{font-size:.8rem;font-weight:600;color:var(--muted);}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:.65rem .9rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.875rem;transition:var(--trans);}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-glow);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:80px;}
+
+/* Progress */
+.progress-bar{background:var(--surface3);border-radius:20px;height:6px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:20px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+
+/* Tags */
+.tag{display:inline-flex;align-items:center;gap:.25rem;padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:600;}
+
+/* Table */
+.table{width:100%;border-collapse:separate;border-spacing:0;}
+.table th{text-align:left;padding:.75rem 1rem;font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);}
+.table td{padding:.75rem 1rem;font-size:.875rem;border-bottom:1px solid var(--border);}
+.table tr:last-child td{border-bottom:none;}
+.table tbody tr:hover{background:var(--surface2);}
+
+/* Section header */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+.section-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;}
+
+/* Chat */
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 160px);}
+.chat-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem;padding:.5rem 0;}
+.msg{display:flex;gap:.75rem;max-width:80%;}
+.msg.user{align-self:flex-end;flex-direction:row-reverse;}
+.msg-bubble{padding:.85rem 1.1rem;border-radius:var(--r2);font-size:.9rem;line-height:1.6;}
+.msg.ai .msg-bubble{background:var(--surface2);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.msg.user .msg-bubble{background:linear-gradient(135deg,var(--brand),var(--brand2));border-bottom-right-radius:4px;}
+.msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+.msg.ai .msg-avatar{background:var(--surface3);border:1px solid var(--border2);}
+.msg.user .msg-avatar{background:linear-gradient(135deg,var(--brand),var(--pink));}
+.chat-input-row{display:flex;gap:.75rem;padding-top:.75rem;border-top:1px solid var(--border);}
+.chat-input-row input{flex:1;}
+.typing{display:flex;gap:.3rem;align-items:center;padding:.5rem .75rem;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce .8s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-6px);}}
+@keyframes fadeInSlide{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:none;}}
+
+/* Planner */
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem;}
+.cal-day{aspect-ratio:1;border-radius:var(--r);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.75rem;cursor:pointer;transition:var(--trans);padding:.25rem;}
+.cal-day:hover{border-color:var(--brand);background:var(--brand-glow);}
+.cal-day.today{border-color:var(--brand2);background:var(--brand-glow);color:var(--brand2);font-weight:700;}
+.cal-day.has-plan{background:var(--surface2);}
+.cal-dot{width:5px;height:5px;border-radius:50%;background:var(--brand2);margin-top:2px;}
+
+/* Weak topic */
+.weak-item{display:flex;align-items:center;gap:1rem;padding:.85rem 1rem;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border);}
+.weak-icon{width:36px;height:36px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:#f8717120;}
+
+/* Onboarding */
+.onboard-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--bg);}
+.onboard-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r3);padding:2.5rem;width:100%;max-width:480px;position:relative;overflow:hidden;}
+.onboard-card::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:var(--brand);opacity:.05;}
+.onboard-title{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:.5rem;background:linear-gradient(135deg,#fff,var(--brand2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.exam-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:.5rem 0 1rem;}
+.exam-opt{border:2px solid var(--border2);border-radius:var(--r);padding:1rem .5rem;cursor:pointer;transition:var(--trans);text-align:center;background:var(--surface2);}
+.exam-opt:hover{border-color:var(--brand);}
+.exam-opt.selected{border-color:var(--brand2);background:var(--brand-glow);}
+.exam-opt .em{font-size:1.8rem;display:block;margin-bottom:.35rem;}
+.exam-opt .et{font-size:.8rem;font-weight:700;font-family:'Syne',sans-serif;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--subtle);border-radius:4px;}
+
+/* Page transitions */
+.page{animation:fadein .2s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* Glow effects */
+.glow-brand{box-shadow:0 0 24px var(--brand-glow);}
+
+/* Responsive */
+@media(max-width:900px){
+  .grid-4,.grid-3{grid-template-columns:repeat(2,1fr);}
+  .sidebar{width:60px;}
+  .sidebar .logo-text,.sidebar .nav-item span,.sidebar .student-info{display:none;}
+  .main{margin-left:60px;}
+}
+@media(max-width:600px){
+  .grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}
+  .main{margin-left:0;}
+  .sidebar{display:none;}
+}
+
+/* Chart containers */
+.chart-wrap{position:relative;height:220px;}
+.chart-wrap-tall{position:relative;height:300px;}
+
+/* Misc */
+.flex{display:flex;}.flex-col{flex-direction:column;}.items-center{align-items:center;}.gap-1{gap:.5rem;}.gap-2{gap:1rem;}.gap-3{gap:1.5rem;}.justify-between{justify-content:space-between;}.flex-1{flex:1;}.mt-1{margin-top:.5rem;}.mt-2{margin-top:1rem;}.mt-3{margin-top:1.5rem;}.mb-2{margin-bottom:1rem;}.w-full{width:100%;}.text-muted{color:var(--muted);}.text-sm{font-size:.875rem;}.text-xs{font-size:.75rem;}.font-bold{font-weight:700;}.rounded{border-radius:var(--r);}.p-3{padding:1.5rem;}.truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--brand2);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty-state{text-align:center;padding:3rem;color:var(--muted);}
+.empty-state .em{font-size:3rem;margin-bottom:1rem;}
+
+/* Phase 2: Pre-test / submit modals */
+.modal-overlay{position:fixed;inset:0;background:#000000a0;backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+.modal-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:2rem;max-width:440px;width:100%;}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.25rem;margin-bottom:.35rem;}
+.energy-grid{display:flex;gap:.5rem;justify-content:space-between;margin:1.25rem 0;}
+.energy-opt{flex:1;text-align:center;padding:.85rem .25rem;border-radius:var(--r);border:1px solid var(--border2);cursor:pointer;transition:var(--trans);background:var(--surface2);font-size:1.4rem;}
+.energy-opt:hover{border-color:var(--brand);}
+.energy-opt.selected{border-color:var(--brand);background:var(--brand-glow);box-shadow:0 0 0 1px var(--brand);}
+.feeling-grid{display:flex;gap:.5rem;margin:1rem 0;}
+.feeling-opt{flex:1;text-align:center;padding:.65rem;border-radius:var(--r);border:1px solid var(--border2);cursor:pointer;background:var(--surface2);font-size:.85rem;font-weight:600;}
+.feeling-opt.selected{border-color:var(--brand);background:var(--brand-glow);color:var(--brand2);}
+.review-stat-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.9rem;}
+.review-stat-row:last-child{border-bottom:none;}
+
+/* Phase 2: Live test interface */
+.test-shell{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;}
+.test-topbar{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;}
+.test-section-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.test-section-tab{padding:.4rem .8rem;border-radius:999px;font-size:.8rem;font-weight:600;border:1px solid var(--border2);background:var(--surface2);cursor:pointer;color:var(--muted);}
+.test-section-tab.active{background:var(--brand-glow);color:var(--brand2);border-color:var(--brand);}
+.test-timer{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;padding:.3rem .75rem;border-radius:var(--r);background:var(--surface2);margin-left:auto;}
+.test-timer.amber{color:var(--amber);background:#fbbf2415;}
+.test-timer.red{color:var(--red);background:#f8717115;animation:pulse-red 1.5s infinite;}
+@keyframes pulse-red{0%,100%{opacity:1;}50%{opacity:.6;}}
+.test-body{flex:1;display:flex;overflow:hidden;}
+.test-navgrid-panel{width:280px;border-right:1px solid var(--border);background:var(--surface);padding:1rem;overflow-y:auto;flex-shrink:0;}
+.qnav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-bottom:1rem;}
+.qnav-btn{aspect-ratio:1;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;}
+.qnav-btn.answered{background:var(--green);border-color:var(--green);color:#06251c;}
+.qnav-btn.visited{background:#fbbf2440;border-color:var(--amber);}
+.qnav-btn.current{outline:2px solid var(--brand2);outline-offset:1px;}
+.qnav-btn.flagged::after{content:'⚑';position:absolute;top:-7px;right:-5px;font-size:.7rem;}
+.qnav-legend{display:flex;flex-direction:column;gap:.4rem;font-size:.75rem;color:var(--muted);}
+.qnav-legend-item{display:flex;align-items:center;gap:.5rem;}
+.qnav-legend-swatch{width:14px;height:14px;border-radius:4px;border:1px solid var(--border2);flex-shrink:0;}
+.test-question-panel{flex:1;overflow-y:auto;padding:1.5rem 2rem;max-width:800px;}
+.test-q-meta{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;}
+.test-q-text{font-size:1.05rem;line-height:1.6;margin-bottom:1.5rem;white-space:pre-wrap;}
+.test-option{display:flex;align-items:flex-start;gap:.75rem;padding:.9rem 1rem;border-radius:var(--r);border:1px solid var(--border2);margin-bottom:.6rem;cursor:pointer;transition:var(--trans);background:var(--surface2);}
+.test-option:hover{border-color:var(--brand);}
+.test-option.selected{border-color:var(--brand);background:var(--brand-glow);}
+.test-option-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--subtle);flex-shrink:0;margin-top:.1rem;display:flex;align-items:center;justify-content:center;}
+.test-option.selected .test-option-radio{border-color:var(--brand2);}
+.test-option.selected .test-option-radio::after{content:'';width:10px;height:10px;border-radius:50%;background:var(--brand2);}
+.test-option-checkbox{width:20px;height:20px;border-radius:5px;border:2px solid var(--subtle);flex-shrink:0;margin-top:.1rem;display:flex;align-items:center;justify-content:center;}
+.test-option.selected .test-option-checkbox{border-color:var(--brand2);background:var(--brand-glow);}
+.test-option.selected .test-option-checkbox::after{content:'✓';color:var(--brand2);font-size:.8rem;font-weight:700;}
+.test-integer-input{width:160px;padding:.75rem 1rem;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:1rem;}
+.confidence-row{display:flex;gap:.5rem;margin:1.25rem 0;}
+.confidence-btn{flex:1;padding:.6rem;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;font-size:.8rem;font-weight:600;color:var(--muted);}
+.confidence-btn.selected-sure{border-color:var(--green);background:#22d3a020;color:var(--green);}
+.confidence-btn.selected-unsure{border-color:var(--amber);background:#fbbf2420;color:var(--amber);}
+.confidence-btn.selected-guessing{border-color:var(--red);background:#f8717120;color:var(--red);}
+.test-footer-nav{display:flex;gap:.6rem;padding:1rem 2rem;border-top:1px solid var(--border);background:var(--surface);}
+@media(max-width:900px){
+  .test-navgrid-panel{position:fixed;left:0;top:48px;bottom:0;transform:translateX(-100%);transition:var(--trans);z-index:50;box-shadow:8px 0 24px #0008;}
+  .test-navgrid-panel.open{transform:translateX(0);}
+  .test-question-panel{padding:1rem;}
+  .test-footer-nav{padding:.75rem 1rem;flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module">
+// ── CONFIG ───────────────────────────────────────────────────────────────────
+const API = location.protocol.startsWith('http') && ['8000', ''].includes(location.port)
+  ? location.origin
+  : 'http://localhost:8000';
+
+// ── EVENT MANAGER (Phase 2: live test behavioral capture) ─────────────────────
+const EventManager = {
+  sessionId: null,
+  queue: [],
+  flushTimer: null,
+  currentQuestionId: null,
+  questionEnterTime: null,
+  answerState: {},
+  confidenceState: {},
+  backgroundStart: null,
+  totalBackgroundMs: 0,
+  FLUSH_INTERVAL_MS: 20000,
+
+  init(sessionId) {
+    this.sessionId = sessionId;
+    this.queue = [];
+    this.answerState = {};
+    this.confidenceState = {};
+    this.totalBackgroundMs = 0;
+    this.currentQuestionId = null;
+    this.questionEnterTime = null;
+    this.backgroundStart = null;
+    if (this.flushTimer) clearInterval(this.flushTimer);
+    this.flushTimer = setInterval(() => this.flush(), this.FLUSH_INTERVAL_MS);
+    this._visibilityHandler = () => {
+      if (document.hidden) {
+        this.backgroundStart = Date.now();
+        this.push('AppBackgrounded', {});
+      } else {
+        if (this.backgroundStart) {
+          this.totalBackgroundMs += Date.now() - this.backgroundStart;
+          this.backgroundStart = null;
+        }
+        this.push('AppForegrounded', {});
+      }
+    };
+    document.addEventListener('visibilitychange', this._visibilityHandler);
+    this._unloadHandler = () => this.flushSync();
+    window.addEventListener('beforeunload', this._unloadHandler);
+  },
+
+  push(eventType, data = {}) {
+    if (!this.sessionId) return;
+    this.queue.push({
+      event_type: eventType,
+      event_data: data,
+      occurred_at: Date.now(),
+      question_id: data.question_id || null
+    });
+  },
+
+  onQuestionView(questionId) {
+    const now = Date.now();
+    if (this.currentQuestionId && this.questionEnterTime) {
+      const rawTime = now - this.questionEnterTime;
+      const bgAdjustedTime = Math.max(0, rawTime - this.totalBackgroundMs);
+      this.totalBackgroundMs = 0;
+      this.push('QuestionLeft', {
+        question_id: this.currentQuestionId,
+        time_spent_ms: bgAdjustedTime
+      });
+    }
+    this.currentQuestionId = questionId;
+    this.questionEnterTime = now;
+    const wasAnswered = !!this.answerState[questionId];
+    this.push(wasAnswered ? 'QuestionRevisited' : 'QuestionViewed', {question_id: questionId});
+  },
+
+  onAnswerSelect(questionId, answer) {
+    const old = this.answerState[questionId] || null;
+    if (old === null) {
+      this.push('AnswerSelected', {question_id: questionId, answer});
+    } else if (old !== answer) {
+      this.push('AnswerChanged', {question_id: questionId, old_answer: old, new_answer: answer});
+    }
+    this.answerState[questionId] = answer;
+  },
+
+  onConfidenceRate(questionId, rating) {
+    this.confidenceState[questionId] = rating;
+    this.push('ConfidenceRated', {question_id: questionId, rating});
+  },
+
+  onAnswerClear(questionId) {
+    this.push('AnswerCleared', {question_id: questionId, had_answer: this.answerState[questionId] || null});
+    delete this.answerState[questionId];
+    delete this.confidenceState[questionId];
+  },
+
+  onSkip(questionId) {
+    this.push('QuestionSkipped', {question_id: questionId});
+  },
+
+  onFlag(questionId, flagged) {
+    this.push('QuestionFlagged', {question_id: questionId, flagged});
+  },
+
+  onSectionChange(from, to) {
+    if (this.currentQuestionId && this.questionEnterTime) {
+      const rawTime = Date.now() - this.questionEnterTime;
+      const bgAdjustedTime = Math.max(0, rawTime - this.totalBackgroundMs);
+      this.totalBackgroundMs = 0;
+      this.push('QuestionLeft', {question_id: this.currentQuestionId, time_spent_ms: bgAdjustedTime});
+      this.currentQuestionId = null;
+      this.questionEnterTime = null;
+    }
+    this.push('SectionChanged', {from_section: from, to_section: to});
+  },
+
+  async onSubmit(finalAnswers) {
+    if (this.currentQuestionId && this.questionEnterTime) {
+      if (this.backgroundStart) {
+        this.totalBackgroundMs += Date.now() - this.backgroundStart;
+        this.backgroundStart = null;
+      }
+      const rawTime = Date.now() - this.questionEnterTime;
+      const bgAdjustedTime = Math.max(0, rawTime - this.totalBackgroundMs);
+      this.push('QuestionLeft', {question_id: this.currentQuestionId, time_spent_ms: bgAdjustedTime});
+      this.currentQuestionId = null;
+      this.questionEnterTime = null;
+    }
+    this.push('TestSubmitted', {final_answers: finalAnswers, confidence_state: this.confidenceState});
+    clearInterval(this.flushTimer);
+    await this.flush();
+  },
+
+  async flush() {
+    if (!this.queue.length || !this.sessionId) return;
+    const batch = [...this.queue];
+    this.queue = [];
+    try {
+      await fetch(`${API}/api/sessions/${this.sessionId}/events`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({events: batch})
+      });
+    } catch(e) {
+      this.queue = [...batch, ...this.queue];
+      console.warn('EventManager: flush failed, events requeued', e);
+    }
+  },
+
+  flushSync() {
+    if (this.currentQuestionId && this.questionEnterTime) {
+      if (this.backgroundStart) {
+        this.totalBackgroundMs += Date.now() - this.backgroundStart;
+        this.backgroundStart = null;
+      }
+      const rawTime = Date.now() - this.questionEnterTime;
+      const bgAdjustedTime = Math.max(0, rawTime - this.totalBackgroundMs);
+      this.push('QuestionLeft', {question_id: this.currentQuestionId, time_spent_ms: bgAdjustedTime});
+      this.currentQuestionId = null;
+      this.questionEnterTime = null;
+    }
+    if (!this.queue.length || !this.sessionId) return;
+    navigator.sendBeacon(
+      `${API}/api/sessions/${this.sessionId}/events`,
+      new Blob([JSON.stringify({events: this.queue})], {type: 'application/json'})
+    );
+  },
+
+  destroy() {
+    clearInterval(this.flushTimer);
+    if (this._visibilityHandler) document.removeEventListener('visibilitychange', this._visibilityHandler);
+    if (this._unloadHandler) window.removeEventListener('beforeunload', this._unloadHandler);
+    this.sessionId = null;
+    this.queue = [];
+    this.currentQuestionId = null;
+    this.questionEnterTime = null;
+  }
+};
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let state = {
+  student: JSON.parse(localStorage.getItem('examace_student') || 'null'),
+  page: 'dashboard',
+  data: {},
+  loading: {},
+  chapters: [],
+  subjects: [],
+  chatMessages: [],
+  chatLoading: false,
+  planItems: [],
+  libraryFilter: 'all',
+  testSession: null,
+  twin: null,          // Phase 4: Digital Twin — loaded after login, refreshed after tests
+  heatmapSubject: null, // Phase 7: selected subject tab on Performance Heatmap (defaults to Physics)
+  showManualPlanForm: false, // Phase 8: manual "Schedule Study Session" form is collapsed by default
+  // Phase 9: Deep Performance Review
+  perfTab: 'heatmap',      // 'heatmap' | 'trends' — sub-tab on the Performance page
+  reviewSessionId: null,   // session currently open in buildTestReview()
+  reviewData: null,        // cached /api/sessions/{sid}/result payload for the review screen
+  reviewTab: 1,            // 1-5, active tab in the post-test review screen
+  reviewQFilter: 'all',    // Tab 2 filter: all | incorrect | skipped | changed
+  reviewExpanded: {},      // {question_id: true} — which Tab 2 rows are expanded
+  reviewMentor: {},        // {sessionId: {loading, reply}} — Tab 5 AI Mentor auto-fire cache
+};
+
+// ── API HELPERS ──────────────────────────────────────────────────────────────
+async function api(path, opts={}) {
+  try {
+    const r = await fetch(API+path, {headers:{'Content-Type':'application/json'},...opts});
+    const data = await r.json();
+    if(!r.ok) {
+      const msg = Array.isArray(data.detail) ? data.detail.map(d=>d.msg).join(', ') : (data.detail || 'Request failed');
+      throw new Error(msg);
+    }
+    return data;
+  } catch(e) {
+    const msg = e instanceof TypeError
+      ? `Could not reach the backend at ${API}. Start the backend first, then open http://localhost:8000/static/index.html.`
+      : (e.message || 'Could not connect to the server.');
+    alert(msg);
+    return null;
+  }
+}
+async function post(path, body) {
+  return api(path, {method:'POST', body: JSON.stringify(body)});
+}
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[ch]));
+}
+function nl2br(value) {
+  return esc(value).replace(/\n/g, '<br/>');
+}
+
+// ── RENDER ENGINE ────────────────────────────────────────────────────────────
+function render() {
+  document.getElementById('root').innerHTML = buildApp();
+  attachEvents();
+}
+
+function buildApp() {
+  if(!state.student) return buildOnboarding();
+  if(state.testSession) return buildTestInterface();
+  return `<div class="app">
+    ${buildSidebar()}
+    <div class="main">
+      ${buildTopbar()}
+      <div class="content page" id="page-content">
+        ${buildPage()}
+      </div>
+    </div>
+  </div>
+  ${state.preTestModal ? buildPreTestModal() : ''}`;
+}
+
+// ── ONBOARDING ───────────────────────────────────────────────────────────────
+function buildOnboarding() {
+  return `<div class="onboard-wrap">
+    <div class="onboard-card">
+      <div style="font-size:2.5rem;margin-bottom:.75rem">🚀</div>
+      <div class="onboard-title">Welcome to ExamAce</div>
+      <p class="text-muted text-sm" style="margin-bottom:1.5rem">Your AI-powered study companion for IIT-JEE, NEET & UPSC</p>
+      
+      <div class="form-group">
+        <label>Full Name</label>
+        <input id="ob-name" placeholder="e.g. Arjun Sharma" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="ob-email" type="email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Target Exam</label>
+        <div class="exam-grid">
+          <div class="exam-opt" data-exam="JEE" onclick="selectExam(this)">
+            <span class="em">⚛️</span><div class="et">IIT-JEE</div>
+          </div>
+          <div class="exam-opt" data-exam="NEET" onclick="selectExam(this)">
+            <span class="em">🧬</span><div class="et">NEET</div>
+          </div>
+          <div class="exam-opt" data-exam="UPSC" onclick="selectExam(this)">
+            <span class="em">🏛️</span><div class="et">UPSC</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary w-full" onclick="createStudent()" style="margin-top:.5rem">
+        Start My Journey →
+      </button>
+      <p class="text-xs text-muted" style="text-align:center;margin-top:1rem">
+        Already have a profile? <a href="#" onclick="showLogin()" style="color:var(--brand2)">Sign in</a>
+      </p>
+    </div>
+  </div>`;
+}
+
+let selectedExam = '';
+window.selectExam = function(el) {
+  document.querySelectorAll('.exam-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedExam = el.dataset.exam;
+};
+
+window.showLogin = function() {
+  document.getElementById('root').innerHTML = `<div class="onboard-wrap">
+    <div class="onboard-card">
+      <div class="onboard-title">Sign In</div>
+      <p class="text-muted text-sm" style="margin-bottom:1.5rem">Enter your email to continue</p>
+      <div class="form-group"><label>Email</label><input id="login-email" type="email" placeholder="you@example.com"/></div>
+      <button class="btn btn-primary w-full" onclick="loginStudent()">Continue →</button>
+    </div>
+  </div>`;
+};
+
+window.loginStudent = async function() {
+  const email = document.getElementById('login-email').value.trim();
+  const students = await api('/api/students');
+  const found = students?.find(s => s.email === email);
+  if(found) {
+    state.student = found;
+    state.data = {};
+    state.chapters = [];
+    state.subjects = [];
+    state.twin = null;
+    localStorage.setItem('examace_student', JSON.stringify(found));
+    await loadTwin();
+    await loadRevisionCount();
+    await loadPageData();
+    render();
+  }
+  else alert('No account found for this email.');
+};
+
+window.createStudent = async function() {
+  const name = document.getElementById('ob-name').value.trim();
+  const email = document.getElementById('ob-email').value.trim();
+  if(!name || !email || !selectedExam) { alert('Please fill all fields and select an exam'); return; }
+  const r = await post('/api/students', {name, email, exam_target: selectedExam});
+  if(r?.id) {
+    state.student = {id: r.id, name, email, exam_target: selectedExam};
+    state.data = {};
+    state.chapters = [];
+    state.subjects = [];
+    state.twin = null;
+    localStorage.setItem('examace_student', JSON.stringify(state.student));
+    await loadTwin();
+    await loadRevisionCount();
+    await loadPageData();
+    render();
+  } else { alert('Could not create account. Server may not be running.'); }
+};
+
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
+const PAGES = [
+  {id:'dashboard', icon:'📊', label:'Dashboard'},
+  {id:'library', icon:'📚', label:'Library'},
+  {id:'rankintel', icon:'🎯', label:'Rank Intel'},
+  {id:'study', icon:'📖', label:'Study Tracker'},
+  {id:'tests', icon:'📝', label:'Mock Tests'},
+  {id:'performance', icon:'📈', label:'Performance'},
+  {id:'mistakes', icon:'⚠️', label:'Mistakes'},
+  {id:'planner', icon:'🗓️', label:'Study Planner'},
+  {id:'chat', icon:'🤖', label:'AI Mentor'},
+];
+
+function buildSidebar() {
+  const s = state.student;
+  const revCount = (state.data.revisionDue || []).length;
+  return `<div class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🎯</div>
+      <span class="logo-text">ExamAce</span>
+    </div>
+    <nav class="nav">
+      ${PAGES.map(p=>`<button class="nav-item ${state.page===p.id?'active':''}" onclick="navigate('${p.id}')">
+        <span class="icon">${p.icon}</span><span>${p.label}</span>${p.id==='planner'&&revCount>0?`<span id="nav-revision-badge" style="margin-left:auto;background:var(--red);color:#fff;border-radius:999px;font-size:.65rem;font-weight:700;min-width:1.2rem;height:1.2rem;display:inline-flex;align-items:center;justify-content:center;padding:0 .25rem">${revCount}</span>`:`<span id="nav-revision-badge" style="display:none"></span>`}
+      </button>`).join('')}
+    </nav>
+    ${s ? `<div class="sidebar-footer">
+      <div class="student-pill">
+        <div class="avatar">${esc(s.name?.[0] || '?')}</div>
+        <div class="student-info">
+          <div class="student-name">${esc(s.name)}</div>
+          <div class="student-exam">${esc(s.exam_target)}</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" style="margin-top:.5rem" onclick="logout()">Sign Out</button>
+    </div>` : ''}
+  </div>`;
+}
+
+function buildTopbar() {
+  const titles = {dashboard:'Dashboard',library:'Test Library',rankintel:'🎯 Rank Intelligence',study:'Study Tracker',tests:'Mock Tests',result:'Test Result',performance:'Chapter Performance',mistakes:'Mistake Analysis',planner:'Study Planner',chat:'AI Mentor',review:'🔬 Deep Performance Review'};
+  return `<div class="topbar">
+    <div style="flex:1">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem">${titles[state.page]||state.page}</div>
+      <div class="text-xs text-muted">${new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+    </div>
+    <div class="flex gap-1 items-center">
+      <span class="tag badge-brand">🔥 ${state.data.dashboard?.streak_days||0} day streak</span>
+    </div>
+  </div>`;
+}
+
+// ── PAGE ROUTER ───────────────────────────────────────────────────────────────
+function buildPage() {
+  switch(state.page) {
+    case 'dashboard': return buildDashboard();
+    case 'library': return buildTestLibrary();
+    case 'rankintel': return buildRankIntelligence();
+    case 'study': return buildStudy();
+    case 'tests': return buildTests();
+    case 'result': return buildTestResult();
+    case 'performance': return buildPerformance();
+    case 'mistakes': return buildMistakes();
+    case 'planner': return buildPlanner();
+    case 'chat': return buildChat();
+    case 'review': return buildTestReview();
+    default: return buildDashboard();
+  }
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function buildDashboard() {
+  const d = state.data.dashboard || {};
+  const recs = state.data.recommendations || [];
+  const twin = state.twin || {};
+  const action = twin.todays_highest_impact_action || '';
+  const actionCard = action
+    ? `<div style="background:linear-gradient(135deg,#1e1b4b 0%,#0f172a 100%);border:1px solid #6d28d9;border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.7rem;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem">⚡ Today's Highest-Impact Action</div>
+          <div style="color:#f1f5f9;font-size:.95rem;line-height:1.55">${esc(action)}</div>
+        </div>
+        <button class="btn btn-sm" style="background:#7c3aed;color:#fff;white-space:nowrap;flex-shrink:0" onclick="askMentorWith(${JSON.stringify(action)})">Ask AI Mentor →</button>
+      </div>`
+    : (twin.tests_analyzed > 0 ? '' : `<div style="background:var(--surface2);border:1px dashed var(--border);border-radius:14px;padding:1.1rem 1.5rem;margin-bottom:1.25rem;text-align:center;color:var(--text2);font-size:.875rem;">
+        Take your first live test to unlock personalized daily recommendations
+        <button class="btn btn-sm btn-primary" style="margin-left:1rem" onclick="navigate('library')">Browse Tests →</button>
+      </div>`);
+  return `
+  ${actionCard}
+  ${buildTwinSummaryCard()}
+  <div class="grid-4 mb-2">
+    ${statCard('📚', 'Study Hours', d.total_study_hours||0, 'h total', 'badge-brand', '#7c6af5')}
+    ${statCard('📝', 'Tests Taken', d.total_tests||0, 'mock tests', 'badge-brand', '#60a5fa')}
+    ${statCard('🎯', 'Avg Score', (d.avg_test_score||0)+'%', 'accuracy', d.avg_test_score>70?'badge-green':'badge-red', '#22d3a0')}
+    ${statCard('🔥', 'Streak', d.streak_days||0, 'days active', 'badge-amber', '#fbbf24')}
+  </div>
+  <div class="grid-2 mt-2">
+    <div class="card">
+      <div class="section-header"><div class="section-title">Study This Week</div></div>
+      <div class="chart-wrap"><canvas id="studyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-header"><div class="section-title">Weak Topics 🚨</div></div>
+      ${(d.weak_topics||[]).length ? (d.weak_topics||[]).map(w=>`
+        <div class="weak-item mt-1">
+          <div class="weak-icon">⚠️</div>
+          <div style="flex:1">
+            <div class="text-sm font-bold">${esc(w.name)}</div>
+            <div class="text-xs text-muted">${esc(w.subject)} • ${w.total_attempted} questions attempted</div>
+            <div class="progress-bar mt-1">
+              <div class="progress-fill" style="width:${Math.round(w.accuracy*100)}%;background:${w.accuracy<0.4?'var(--red)':w.accuracy<0.6?'var(--amber)':'var(--green)'}"></div>
+            </div>
+          </div>
+          <div class="text-sm font-bold" style="color:${w.accuracy<0.4?'var(--red)':w.accuracy<0.6?'var(--amber)':'var(--green)'}">${Math.round(w.accuracy*100)}%</div>
+        </div>
+      `).join('') : '<div class="empty-state"><div class="em">✅</div><p>No weak topics yet! Keep taking tests.</p></div>'}
+    </div>
+  </div>
+  <div class="grid-2 mt-2">
+    <div class="card">
+      <div class="section-header"><div class="section-title">Recent Tests</div></div>
+      ${(d.recent_tests||[]).length ? `<table class="table">
+        <thead><tr><th>Test</th><th>Score</th><th>Date</th></tr></thead>
+        <tbody>${(d.recent_tests||[]).map(t=>{
+          const pct = t.total_marks ? Math.round(t.scored_marks/t.total_marks*100) : 0;
+          const clickable = !!t.session_id;
+          return `<tr ${clickable?`style="cursor:pointer" onclick="viewPastResult(${t.session_id})"`:''}>
+            <td>${esc(t.title)}${clickable?' <span class="text-xs text-muted">→</span>':''}</td>
+            <td><span class="tag ${pct>70?'badge-green':pct>50?'badge-amber':'badge-red'}">${pct}%</span></td>
+            <td class="text-xs text-muted">${esc((t.date||'').split(' ')[0])}</td></tr>`;
+        }).join('')}</tbody>
+      </table>` : '<div class="empty-state"><div class="em">📝</div><p>No tests yet. <a href="#" onclick="navigate(\'tests\')" style="color:var(--brand2)">Add one →</a></p></div>'}
+    </div>
+    <div class="card">
+      <div class="section-header"><div class="section-title">AI Recommendations 🤖</div></div>
+      ${recs.length ? recs.map(r=>`
+        <div class="card-sm mt-1" style="border-left:3px solid ${r.priority==='high'?'var(--red)':'var(--amber)'}">
+          <div class="flex items-center gap-1 mb-1">
+            <span class="text-sm font-bold">${esc(r.chapter)}</span>
+            <span class="tag ${r.priority==='high'?'badge-red':'badge-amber'}" style="margin-left:auto">${esc(r.priority)}</span>
+          </div>
+          <div class="text-xs text-muted">${esc(r.reason)}</div>
+          <button class="btn btn-ghost btn-sm mt-1" onclick="navigate('chat')">Ask AI Mentor →</button>
+        </div>
+      `).join('') : '<div class="empty-state"><div class="em">💡</div><p>Complete tests to get recommendations</p></div>'}
+    </div>
+  </div>`;
+}
+
+function statCard(icon, label, val, sub, badge, color) {
+  return `<div class="stat-card" style="--accent-color:${color}">
+    <div style="font-size:1.4rem;margin-bottom:.5rem">${icon}</div>
+    <div class="stat-number" style="color:${color}">${val}</div>
+    <div class="stat-label">${label}</div>
+    <div class="stat-badge ${badge}">${sub}</div>
+  </div>`;
+}
+
+// ── RANK INTELLIGENCE DASHBOARD ───────────────────────────────────────────────
+
+function buildRankIntelligence() {
+  const ri = state.data.rankIntel || null;
+  const twin = (ri && ri.twin) || state.twin || {};
+  const level = twin.unlock_level || 1;
+  const n = twin.tests_analyzed || 0;
+  const scores = twin.scores || {};
+  const bp = twin.behavioral_patterns || {};
+  const rls = twin.rank_leakage_summary || {};
+  const preds = twin.predictions || {};
+  const scoreHistory = (ri && ri.score_history) || [];
+  const leakageByType = (ri && ri.leakage_by_type) || [];
+  const latestFlags = (ri && ri.latest_flags) || {};
+
+  const MISTAKE_COLORS = {conceptual:'#f87171',calculation:'#fbbf24',time_pressure:'#a78bfa',guessing:'#94a3b8',careless:'#fb923c',avoidance:'#ef4444',formula_recall:'#60a5fa',misread:'#34d399'};
+  const COGNITIVE_LABELS = {conceptual_understanding:'Conceptual Understanding',problem_solving:'Problem Solving Speed',time_management:'Time Management',confidence_calibration:'Confidence Calibration',retention:'Retention & Recall',exam_readiness:'Exam Readiness',adaptability:'Adaptability'};
+
+  // ── SECTION 1: Score vs Potential (always visible) ─────────────────────────
+  const lastEntry = scoreHistory[scoreHistory.length - 1] || null;
+  const lastLeakage = lastEntry ? (ri?.leakage_by_type?.reduce((a,b) => a + b.avg_marks_per_test, 0) || 0) : 0;
+  const actualScore = lastEntry ? lastEntry.raw_score : null;
+  const maxScore = lastEntry ? lastEntry.max_score : null;
+  const potentialScore = actualScore !== null ? Math.min(maxScore, actualScore + lastLeakage) : null;
+  const recoverable = potentialScore !== null ? (potentialScore - actualScore).toFixed(1) : null;
+
+  const section1 = `
+    <div class="card mb-2">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.06em">📊 Score vs Potential — Most Recent Test</div>
+      ${actualScore !== null ? `
+        <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap;margin-bottom:1rem">
+          <div style="text-align:center">
+            <div class="text-xs text-muted mb-1">Your Score</div>
+            <div style="font-size:2.8rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--text1)">${actualScore}</div>
+            <div class="text-xs text-muted">/ ${maxScore}</div>
+          </div>
+          <div style="font-size:1.5rem;color:var(--text2)">→</div>
+          <div style="text-align:center">
+            <div class="text-xs text-muted mb-1">Your Potential</div>
+            <div style="font-size:2.8rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--brand2)">${potentialScore?.toFixed(0) || '—'}</div>
+            <div class="text-xs text-muted">/ ${maxScore}</div>
+          </div>
+          <div style="flex:1;min-width:180px;background:var(--surface2);border-radius:10px;padding:1rem;border-left:3px solid var(--brand)">
+            <div style="font-size:1.6rem;font-weight:700;color:var(--brand2)">${recoverable || '—'} marks</div>
+            <div class="text-xs text-muted">recoverable through behavior fixes</div>
+            <div class="text-xs" style="color:var(--brand2);margin-top:.25rem">${maxScore ? ((parseFloat(recoverable)/maxScore)*100).toFixed(0) : 0}% of your lost marks are fixable</div>
+          </div>
+        </div>
+        ${scoreHistory.length > 1 ? `<div style="height:80px;position:relative" id="ri-score-sparkline"><canvas id="riSparkChart"></canvas></div>` : ''}
+      ` : `
+        <div style="padding:2rem;text-align:center;color:var(--text2)">
+          <div style="font-size:1.5rem;margin-bottom:.5rem">📊</div>
+          <div>Take your first live test to see where you're leaking marks</div>
+          <button class="btn btn-primary btn-sm mt-2" onclick="navigate('library')">Browse Test Library →</button>
+        </div>
+      `}
+    </div>`;
+
+  // ── SECTION 2: Rank Leakage Breakdown (level 2+) ──────────────────────────
+  let section2 = '';
+  if (level < 2) {
+    section2 = buildLockCard(2, n, 'Rank Leakage Breakdown');
+    section2 = `<div class="mb-2">${section2}</div>`;
+  } else {
+    const totalLeaked = rls.avg_leaked_per_test || 0;
+    const topLeakSrc = rls.top_leakage_source || '';
+    const fix1ActionMap = {
+      conceptual: 'Revise the underlying theory, not more practice problems. Use your mistake log to find which chapters.',
+      calculation: 'Practice 10 calculation-heavy problems daily with a focus on step verification before moving on.',
+      time_pressure: 'Practice pacing: set a 2-min hard limit per question in your next mock. Move on when it hits.',
+      guessing: 'Mark questions you are unsure about with a flag. Review flagged Qs last — don\'t guess mid-test.',
+      avoidance: 'Pick 3 chapters you avoid. Spend 20 mins each day on them before anything else.',
+      careless: 'Write down each step. Careless errors drop dramatically when work is visible on paper.',
+    };
+    const fix1Action = fix1ActionMap[topLeakSrc] || 'Focus on your highest leakage source first.';
+    const maxLeaked = leakageByType.reduce((m,i) => Math.max(m, i.avg_marks_per_test), 1);
+
+    section2 = `
+      <div class="card mb-2">
+        <div class="text-xs font-bold text-muted mb-3" style="text-transform:uppercase;letter-spacing:.06em">⚡ Rank Leakage — Average per Test</div>
+        ${leakageByType.length > 0 ? `
+          <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.25rem">
+            ${leakageByType.map(item => {
+              const col = MISTAKE_COLORS[item.mistake_type] || '#94a3b8';
+              const label = MISTAKE_TYPE_LABELS[item.mistake_type] || item.mistake_type;
+              const barPct = maxLeaked > 0 ? (item.avg_marks_per_test / maxLeaked) * 100 : 0;
+              return `<div class="flex items-center gap-2">
+                <div style="width:130px;font-size:.78rem;color:var(--text2);flex-shrink:0">${esc(label)}</div>
+                <div style="flex:1;background:var(--border);border-radius:4px;height:10px">
+                  <div style="height:10px;border-radius:4px;background:${col};width:${barPct.toFixed(0)}%;transition:width .5s"></div>
+                </div>
+                <div style="width:45px;text-align:right;font-size:.8rem;font-weight:700;color:${col}">${item.avg_marks_per_test?.toFixed(1)}</div>
+                <div class="text-xs text-muted" style="width:35px">${item.count}×</div>
+              </div>`;
+            }).join('')}
+          </div>
+          ${topLeakSrc ? `
+            <div style="background:var(--brand-glow);border:1px solid var(--brand);border-radius:10px;padding:1rem">
+              <div class="text-xs font-bold" style="color:var(--brand2);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em">🎯 Fix This First</div>
+              <div class="text-sm font-bold mb-1" style="text-transform:capitalize">${esc(topLeakSrc.replace('_',' '))} errors — costing you ${totalLeaked.toFixed(1)} marks/test on average</div>
+              <div class="text-sm text-muted mb-2">${esc(fix1Action)}</div>
+              <button class="btn btn-sm" style="background:var(--brand);color:#fff" onclick="askMentorWith('My top rank leakage source is ${topLeakSrc}. I lose about ${totalLeaked.toFixed(1)} marks per test to it. How do I fix this specifically?')">Ask mentor how to fix this →</button>
+            </div>
+          ` : ''}
+        ` : '<div class="empty-state" style="padding:1.5rem;text-align:center;color:var(--text2)">No leakage data yet — complete a live test for the pipeline to analyze</div>'}
+      </div>`;
+  }
+
+  // ── SECTION 3: Behavioral Flags (level 2+) ────────────────────────────────
+  let section3 = '';
+  if (level < 2) {
+    section3 = '';  // Already shown locked above
+  } else {
+    const panicFrac = bp.panic_fraction || 0;
+    const panicCount = bp.panic_detected_count || 0;
+    const sgPenalty = bp.second_guess_penalty_avg_marks || 0;
+    const avoidChapters = bp.avoidance_chapters || [];
+    const overconfRate = bp.overconfidence_rate || 0;
+    const underconfRate = bp.underconfidence_rate || 0;
+    const fatigue = bp.fatigue_threshold_mins;
+    const qSelectScore = bp.question_selection_score || 0;
+
+    const flagItems = [];
+    if (panicFrac > 0.1) flagItems.push({icon:'⚡', name:'Panic Behavior', evidence:`Detected in ${panicCount} of ${n} tests — panic fraction: ${(panicFrac*100).toFixed(0)}%`, sev: panicFrac > 0.4 ? 'high' : 'medium', freq:`${panicCount}/${n} tests`});
+    if (sgPenalty > 0.5) flagItems.push({icon:'🔄', name:'Second-Guessing', evidence:`Avg ${sgPenalty.toFixed(1)} marks/test lost by changing correct answers near end`, sev: sgPenalty > 2 ? 'high' : 'medium', freq:`Every test`});
+    if (avoidChapters.length > 0) flagItems.push({icon:'🚫', name:'Chapter Avoidance', evidence:`Chapters avoided in >30% of tests: ${avoidChapters.slice(0,3).join(', ')}`, sev:'medium', freq:`${avoidChapters.length} chapters`});
+    if (overconfRate > 0.2) flagItems.push({icon:'📈', name:'Overconfidence', evidence:`${(overconfRate*100).toFixed(0)}% of times you felt "Sure" — you were wrong`, sev: overconfRate > 0.4 ? 'high' : 'medium', freq:`${(overconfRate*100).toFixed(0)}% of attempts`});
+    if (underconfRate > 0.3) flagItems.push({icon:'📉', name:'Underconfidence', evidence:`${(underconfRate*100).toFixed(0)}% of times you felt "Unsure" — you were actually right`, sev:'medium', freq:`${(underconfRate*100).toFixed(0)}% of attempts`});
+    if (fatigue) flagItems.push({icon:'😴', name:'Fatigue Pattern', evidence:`Performance drops consistently after minute ${fatigue}`, sev:'medium', freq:'Most tests'});
+    if (qSelectScore < 0.4) flagItems.push({icon:'🎲', name:'Poor Question Selection', evidence:`Question selection score: ${(qSelectScore*100).toFixed(0)}/100 — skipping high-value Qs, attempting low-value Qs`, sev:'medium', freq:'Pattern detected'});
+
+    section3 = `
+      <div class="card mb-2">
+        <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.06em">🧠 Behavioral Flags (${n} tests analyzed)</div>
+        ${flagItems.length > 0 ? flagItems.map(f => {
+          const sevColor = f.sev==='high' ? 'var(--red)' : f.sev==='medium' ? 'var(--amber)' : 'var(--green)';
+          return `<div class="flex items-start gap-2 mb-2" style="padding:.75rem;background:var(--surface2);border-radius:10px;border-left:4px solid ${sevColor}">
+            <div style="font-size:1.1rem;flex-shrink:0">${f.icon}</div>
+            <div style="flex:1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-bold">${esc(f.name)}</span>
+                <span class="tag" style="font-size:.65rem;background:${sevColor}22;color:${sevColor};margin-left:auto">${f.sev}</span>
+              </div>
+              <div class="text-xs text-muted">${esc(f.evidence)}</div>
+              <div class="text-xs" style="color:var(--text2);margin-top:.2rem">Detected: ${esc(f.freq)}</div>
+            </div>
+          </div>`;
+        }).join('') : `<div style="padding:1.5rem;text-align:center;color:var(--text2);font-size:.875rem">✅ No significant behavioral flags detected yet</div>`}
+      </div>`;
+  }
+
+  // ── SECTION 4: Digital Twin Scores (level 3+) ─────────────────────────────
+  let section4 = '';
+  if (level < 3) {
+    section4 = `<div class="mb-2">${buildLockCard(3, n, 'Digital Twin Cognitive Scores')}</div>`;
+  } else {
+    const cogKeys = Object.keys(COGNITIVE_LABELS);
+    const scoreHistory2 = twin.score_history || [];
+    const prevScores = scoreHistory2.length >= 2 ? (scoreHistory2[scoreHistory2.length-2]?.scores || {}) : {};
+    section4 = `
+      <div class="card mb-2">
+        <div class="text-xs font-bold text-muted mb-3" style="text-transform:uppercase;letter-spacing:.06em">🧬 Digital Twin — Cognitive Profile</div>
+        <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.5rem">
+          ${cogKeys.map(k => {
+            const val = scores[k];
+            if (val === null || val === undefined) return '';
+            const prev = prevScores[k];
+            const trend = prev !== null && prev !== undefined ? (val > prev + 1 ? '↑' : val < prev - 1 ? '↓' : '→') : '—';
+            const trendColor = trend === '↑' ? 'var(--green)' : trend === '↓' ? 'var(--red)' : 'var(--text2)';
+            const barColor = val >= 70 ? 'var(--green)' : val >= 50 ? 'var(--amber)' : 'var(--red)';
+            return `<div class="flex items-center gap-2">
+              <div style="width:155px;font-size:.78rem;color:var(--text2);flex-shrink:0">${esc(COGNITIVE_LABELS[k])}</div>
+              <div style="flex:1;background:var(--border);border-radius:4px;height:8px">
+                <div style="height:8px;border-radius:4px;background:${barColor};width:${val}%;transition:width .6s"></div>
+              </div>
+              <div style="width:38px;text-align:right;font-size:.8rem;font-weight:700;color:${barColor}">${val}</div>
+              <div style="width:18px;text-align:center;font-size:.9rem;color:${trendColor}">${trend}</div>
+            </div>`;
+          }).filter(Boolean).join('')}
+        </div>
+        <div style="height:200px"><canvas id="riRadarChart"></canvas></div>
+      </div>`;
+  }
+
+  // ── SECTION 5: Rank Prediction (level 4+) ─────────────────────────────────
+  let section5 = '';
+  if (level < 4) {
+    section5 = `<div class="mb-2">${buildLockCard(4, n, 'Rank & Score Prediction')}</div>`;
+  } else {
+    const confPct = preds.confidence_pct || 0;
+    const rankLow = preds.rank_range_low;
+    const rankHigh = preds.rank_range_high;
+    const scoreLow = preds.score_range_low;
+    const scoreHigh = preds.score_range_high;
+    const onTrack = preds.on_track;
+    const targetRank = twin.target_rank;
+    const gap = rankLow && targetRank && rankLow > targetRank ? rankLow - targetRank : null;
+
+    section5 = `
+      <div class="card mb-2">
+        <div class="text-xs font-bold text-muted mb-3" style="text-transform:uppercase;letter-spacing:.06em">🔮 Rank & Score Prediction</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem">
+            <div class="text-xs text-muted mb-1">Predicted Rank</div>
+            <div style="font-size:1.5rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--brand2)">${rankLow ? `${rankLow.toLocaleString()} – ${rankHigh?.toLocaleString()}` : 'Insufficient data'}</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem">
+            <div class="text-xs text-muted mb-1">Predicted Score</div>
+            <div style="font-size:1.5rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--text1)">${scoreLow !== null ? `${scoreLow} – ${scoreHigh}` : '—'}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mb-3">
+          <div style="flex:1;background:var(--border);border-radius:4px;height:8px">
+            <div style="height:8px;border-radius:4px;background:var(--brand2);width:${confPct}%"></div>
+          </div>
+          <span class="text-xs text-muted">${confPct}% confidence (${n} tests)</span>
+        </div>
+        ${onTrack !== null ? `
+          <div style="padding:.85rem 1rem;border-radius:8px;background:${onTrack ? '#22d3a020' : '#f8717120'};border:1px solid ${onTrack ? 'var(--green)' : 'var(--red)'}">
+            <span style="font-size:1rem">${onTrack ? '✅' : '❌'}</span>
+            <span class="text-sm font-bold" style="color:${onTrack?'var(--green)':'var(--red)'};margin-left:.5rem">
+              ${onTrack ? `On track for target rank ${targetRank?.toLocaleString() || ''}` : `Behind target — need +${gap ? gap.toLocaleString() : '?'} rank improvement to reach rank ${targetRank?.toLocaleString() || 'target'}`}
+            </span>
+          </div>
+        ` : ''}
+        ${scoreHistory.length > 1 ? `<div style="height:160px;margin-top:1rem"><canvas id="riTrendChart"></canvas></div>` : ''}
+      </div>`;
+  }
+
+  return `
+    ${section1}
+    ${section2}
+    ${section3}
+    ${section4}
+    ${section5}
+  `;
+}
+
+// ── RANK INTEL CHART INITIALIZATION ───────────────────────────────────────────
+function initRankIntelCharts() {
+  const ri = state.data.rankIntel || {};
+  const twin = ri.twin || state.twin || {};
+  const scoreHistory = ri.score_history || [];
+  const scores = twin.scores || {};
+  const COGNITIVE_LABELS = {conceptual_understanding:'Conceptual',problem_solving:'Problem Solving',time_management:'Time Mgmt',confidence_calibration:'Confidence',retention:'Retention',exam_readiness:'Exam Ready',adaptability:'Adaptability'};
+
+  // Sparkline chart in section 1
+  const sparkEl = document.getElementById('riSparkChart');
+  if (sparkEl && scoreHistory.length > 1) {
+    if (window._riSparkChart) window._riSparkChart.destroy();
+    window._riSparkChart = new Chart(sparkEl, {
+      type: 'line',
+      data: {
+        labels: scoreHistory.map(s => (s.submitted_at||'').slice(5,10) || ''),
+        datasets: [{
+          label: 'Score %', data: scoreHistory.map(s => s.pct),
+          fill: true, backgroundColor: '#7c6af518', borderColor: '#7c6af5',
+          tension: .4, pointBackgroundColor: '#7c6af5', pointRadius: 4,
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 }, x: { display: false } } }
+    });
+  }
+
+  // Radar chart in section 4
+  const radarEl = document.getElementById('riRadarChart');
+  if (radarEl) {
+    const cogKeys = Object.keys(COGNITIVE_LABELS);
+    const vals = cogKeys.map(k => scores[k] || 0);
+    if (vals.some(v => v > 0)) {
+      if (window._riRadarChart) window._riRadarChart.destroy();
+      window._riRadarChart = new Chart(radarEl, {
+        type: 'radar',
+        data: {
+          labels: cogKeys.map(k => COGNITIVE_LABELS[k]),
+          datasets: [{ label: 'Cognitive Profile', data: vals, backgroundColor: '#7c6af530', borderColor: '#7c6af5', pointBackgroundColor: '#7c6af5', pointRadius: 4 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: '#ffffff10' }, pointLabels: { color: '#8888aa', font: { size: 11 } } } }, plugins: { legend: { display: false } } }
+      });
+    }
+  }
+
+  // Trend chart in section 5
+  const trendEl = document.getElementById('riTrendChart');
+  if (trendEl && scoreHistory.length > 1) {
+    if (window._riTrendChart) window._riTrendChart.destroy();
+    const labels = scoreHistory.map(s => (s.submitted_at||'').slice(5,10) || '');
+    const dataPoints = scoreHistory.map(s => s.pct);
+    // Simple linear projection for next point
+    if (dataPoints.length >= 2) {
+      const last = dataPoints[dataPoints.length-1];
+      const diff = (last - dataPoints[0]) / (dataPoints.length-1);
+      labels.push('Proj.');
+      dataPoints.push(null); // break actual line
+    }
+    window._riTrendChart = new Chart(trendEl, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{ label: 'Score %', data: dataPoints.slice(0,-1), fill: true, backgroundColor: '#22d3a015', borderColor: '#22d3a0', tension: .4, pointBackgroundColor: '#22d3a0', pointRadius: 5 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
+    });
+  }
+}
+
+// ── STUDY TRACKER ─────────────────────────────────────────────────────────────
+function buildStudy() {
+  const sessions = state.data.sessions || [];
+  const chapters = state.chapters || [];
+  return `
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title mb-2">Log Study Session</div>
+      <div class="form-group">
+        <label>Chapter</label>
+        <select id="st-chapter">
+          ${chapters.map(c=>`<option value="${c.id}">${esc(c.subject_name)} — ${esc(c.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Duration (minutes)</label>
+        <input id="st-duration" type="number" placeholder="60" min="5" max="480"/>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input id="st-date" type="date" value="${new Date().toISOString().split('T')[0]}"/>
+      </div>
+      <div class="form-group">
+        <label>Notes (optional)</label>
+        <textarea id="st-notes" placeholder="What did you cover today?"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="logSession()">Log Session ✓</button>
+    </div>
+    <div class="card">
+      <div class="section-title mb-2">Recent Sessions</div>
+      ${sessions.length ? `<div style="display:flex;flex-direction:column;gap:.5rem;max-height:400px;overflow-y:auto">
+        ${sessions.map(s=>`<div class="card-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-bold">${esc(s.chapter_name)}</div>
+              <div class="text-xs text-muted">${esc(s.subject_name)} • ${esc(s.date)}</div>
+            </div>
+            <span class="tag badge-brand">${s.duration_mins}m</span>
+          </div>
+          ${s.notes?`<div class="text-xs text-muted mt-1">${esc(s.notes)}</div>`:''}
+        </div>`).join('')}
+      </div>` : '<div class="empty-state"><div class="em">📚</div><p>No sessions logged yet</p></div>'}
+    </div>
+  </div>`;
+}
+
+// ── TEST LIBRARY ─────────────────────────────────────────────────────────────
+const LIBRARY_FILTERS = [
+  {id:'all', label:'All'},
+  {id:'full_mock', label:'Full Mocks'},
+  {id:'subject_mock', label:'Subject Mocks'},
+  {id:'subject_test', label:'Subject Tests'},
+  {id:'unit_mock', label:'Unit Mocks'},
+  {id:'chapter_test', label:'Quick Practice'},
+];
+
+function buildTestLibrary() {
+  const templates = state.data.templates || [];
+  const filter = state.libraryFilter || 'all';
+  const filtered = filter === 'all' ? templates : templates.filter(t => t.test_type === filter);
+
+  return `
+  <div class="flex items-center gap-1 mb-2" style="flex-wrap:wrap">
+    ${LIBRARY_FILTERS.map(f => `
+      <button class="btn ${filter===f.id?'btn-primary':'btn-ghost'} btn-sm" onclick="setLibraryFilter('${f.id}')">${esc(f.label)}</button>
+    `).join('')}
+  </div>
+  ${filtered.length ? `
+    <div class="grid-2">
+      ${filtered.map(t => buildTemplateCard(t)).join('')}
+    </div>
+  ` : `<div class="empty-state"><div class="em">📚</div><p>No tests available yet. Check back soon.</p></div>`}
+  `;
+}
+
+function buildTemplateCard(t) {
+  const dist = t._difficulty || {easy:0, medium:0, hard:0, total:0};
+  const typeLabels = {full_mock:'Full Mock', subject_mock:'Subject Mock', subject_test:'Subject Test', unit_mock:'Unit Mock', chapter_test:'Quick Practice', custom:'Custom'};
+  const dateAdded = t.created_at ? esc(t.created_at.split(' ')[0]) : '';
+  return `
+    <div class="card-sm" style="display:flex;flex-direction:column;gap:.6rem">
+      <div class="flex items-center gap-1">
+        <span class="tag badge-brand">${esc(typeLabels[t.test_type] || t.test_type)}</span>
+        <span class="text-xs text-muted" style="margin-left:auto">${dateAdded}</span>
+      </div>
+      <div class="font-bold" style="font-family:'Syne',sans-serif">${esc(t.name)}</div>
+      <div class="flex items-center gap-2 text-xs text-muted">
+        <span>📝 ${t.question_count || 0} questions</span>
+        <span>⏱️ ${t.duration_mins} mins</span>
+        <span>🏆 ${t.total_marks} marks</span>
+      </div>
+      ${dist.total > 0 ? `
+        <div>
+          <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--surface3)">
+            ${dist.easy>0?`<div style="width:${dist.easy/dist.total*100}%;background:var(--green)" title="Easy: ${dist.easy}"></div>`:''}
+            ${dist.medium>0?`<div style="width:${dist.medium/dist.total*100}%;background:var(--amber)" title="Medium: ${dist.medium}"></div>`:''}
+            ${dist.hard>0?`<div style="width:${dist.hard/dist.total*100}%;background:var(--red)" title="Hard: ${dist.hard}"></div>`:''}
+          </div>
+          <div class="flex items-center gap-1 text-xs text-muted" style="margin-top:.35rem">
+            <span>🟢 ${dist.easy} easy</span><span>🟡 ${dist.medium} medium</span><span>🔴 ${dist.hard} hard</span>
+          </div>
+        </div>
+      ` : ''}
+      <button class="btn btn-primary" onclick="startTemplate(${t.id})" style="margin-top:.25rem">Start Test →</button>
+    </div>
+  `;
+}
+
+window.setLibraryFilter = function(filterId) {
+  state.libraryFilter = filterId;
+  render();
+};
+
+window.startTemplate = async function(templateId) {
+  const detail = await api(`/api/templates/${templateId}`);
+  if (!detail) return;
+  state.preTestModal = {template: detail, energyLevel: null};
+  render();
+};
+
+window.selectPreTestEnergy = function(level) {
+  if (!state.preTestModal) return;
+  state.preTestModal.energyLevel = level;
+  render();
+};
+
+window.cancelPreTestModal = function() {
+  state.preTestModal = null;
+  render();
+};
+
+window.confirmStartTest = async function() {
+  const modal = state.preTestModal;
+  if (!modal || !modal.energyLevel) return;
+  const r = await post('/api/sessions', {
+    student_id: state.student.id,
+    template_id: modal.template.id,
+    energy_level: modal.energyLevel,
+  });
+  if (!r || !r.session_id) return;
+
+  state.preTestModal = null;
+  state.testSession = {
+    sessionId: r.session_id,
+    template: r.template,
+    questions: r.questions,
+    sections: [...new Set(r.questions.map(q => q.section_name))],
+    currentSection: r.questions[0]?.section_name,
+    currentIndex: 0,
+    answers: {},
+    flagged: {},
+    confidence: {},
+    timeRemainingSecs: r.template.duration_mins * 60,
+    timerInterval: null,
+    submitting: false,
+    showSubmitModal: false,
+    finalFeeling: null,
+    energyLevelAtStart: modal.energyLevel,
+  };
+  EventManager.init(r.session_id);
+  startTestTimer();
+  markVisited(state.testSession.questions[0].id);
+  EventManager.onQuestionView(state.testSession.questions[0].id);
+  render();
+};
+
+// ── PRE-TEST MODAL ────────────────────────────────────────────────────────────
+const ENERGY_EMOJI = ['😴','😕','😐','🙂','💪'];
+function buildPreTestModal() {
+  const m = state.preTestModal;
+  return `
+  <div class="modal-overlay" onclick="if(event.target===this)cancelPreTestModal()">
+    <div class="modal-card">
+      <div class="modal-title">Before you begin</div>
+      <p class="text-muted text-sm">${esc(m.template.name)} · ${m.template.duration_mins} mins · ${m.template.total_marks} marks</p>
+      <p class="text-sm mt-2" style="font-weight:600">How are you feeling right now?</p>
+      <div class="energy-grid">
+        ${ENERGY_EMOJI.map((e,i) => `
+          <div class="energy-opt ${m.energyLevel===i+1?'selected':''}" onclick="selectPreTestEnergy(${i+1})">${e}<div class="text-xs mt-1">${i+1}</div></div>
+        `).join('')}
+      </div>
+      <div class="flex gap-1" style="margin-top:1.25rem">
+        <button class="btn btn-ghost flex-1" onclick="cancelPreTestModal()">Cancel</button>
+        <button class="btn btn-primary flex-1" ${m.energyLevel?'':'disabled style="opacity:.5;cursor:not-allowed"'} onclick="confirmStartTest()">Start Test →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+function startTestTimer() {
+  const ts = state.testSession;
+  if (!ts) return;
+  if (ts.timerInterval) clearInterval(ts.timerInterval);
+  ts.timerInterval = setInterval(() => {
+    if (!state.testSession) return;
+    state.testSession.timeRemainingSecs--;
+    if (state.testSession.timeRemainingSecs <= 0) {
+      state.testSession.timeRemainingSecs = 0;
+      clearInterval(state.testSession.timerInterval);
+      autoSubmitTimedOut();
+      return;
+    }
+    // Only repaint the timer node directly to avoid a full re-render every second.
+    const el = document.getElementById('test-timer-display');
+    if (el) {
+      el.textContent = formatTimer(state.testSession.timeRemainingSecs);
+      el.className = 'test-timer ' + timerUrgencyClass(state.testSession.timeRemainingSecs);
+    } else {
+      render();
+    }
+  }, 1000);
+}
+function formatTimer(secs) {
+  const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60), s = secs%60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+    : `${m}:${String(s).padStart(2,'0')}`;
+}
+function timerUrgencyClass(secs) {
+  if (secs <= 600) return 'red';
+  if (secs <= 1800) return 'amber';
+  return '';
+}
+
+async function autoSubmitTimedOut() {
+  await doSubmitTest('timed_out');
+}
+
+// ── TEST INTERFACE ────────────────────────────────────────────────────────────
+function buildTestInterface() {
+  const ts = state.testSession;
+  const q = ts.questions[ts.currentIndex];
+  const qState = q ? getQuestionNavState(q.id) : 'not_visited';
+  const attempted = Object.keys(ts.answers).length;
+  const flaggedCount = Object.keys(ts.flagged).filter(k => ts.flagged[k]).length;
+
+  return `
+  <div class="test-shell">
+    <div class="test-topbar">
+      <div class="test-section-tabs">
+        ${ts.sections.map(sec => `
+          <button class="test-section-tab ${ts.currentSection===sec?'active':''}" onclick="switchTestSection('${esc(sec)}')">${esc(sec)}</button>
+        `).join('')}
+      </div>
+      <button class="btn btn-ghost btn-sm" style="display:none" id="navgrid-toggle" onclick="toggleNavGrid()">☰ Questions</button>
+      <div id="test-timer-display" class="test-timer ${timerUrgencyClass(ts.timeRemainingSecs)}">${formatTimer(ts.timeRemainingSecs)}</div>
+      <button class="btn btn-primary btn-sm" onclick="openSubmitModal()">Submit Test</button>
+    </div>
+    <div class="test-body">
+      <div class="test-navgrid-panel" id="test-navgrid-panel">
+        <div class="text-sm font-bold mb-2">${esc(ts.currentSection)}</div>
+        <div class="qnav-grid">
+          ${ts.questions.filter(qq => qq.section_name === ts.currentSection).map(qq => {
+            const idx = ts.questions.indexOf(qq);
+            const st = getQuestionNavState(qq.id);
+            const flaggedCls = ts.flagged[qq.id] ? 'flagged' : '';
+            const curCls = idx === ts.currentIndex ? 'current' : '';
+            return `<button class="qnav-btn ${st} ${flaggedCls} ${curCls}" onclick="jumpToQuestion(${idx})">${qq.question_order}</button>`;
+          }).join('')}
+        </div>
+        <div class="qnav-legend">
+          <div class="qnav-legend-item"><span class="qnav-legend-swatch" style="background:var(--green);border-color:var(--green)"></span>Answered</div>
+          <div class="qnav-legend-item"><span class="qnav-legend-swatch" style="background:var(--surface2)"></span>Not visited</div>
+          <div class="qnav-legend-item"><span class="qnav-legend-swatch" style="background:#fbbf2440;border-color:var(--amber)"></span>Visited, unanswered</div>
+          <div class="qnav-legend-item"><span class="qnav-legend-swatch" style="position:relative">⚑</span>Flagged</div>
+        </div>
+        <div class="text-xs text-muted mt-2">Attempted: ${attempted} / ${ts.questions.length} · Flagged: ${flaggedCount}</div>
+      </div>
+      <div class="test-question-panel">
+        ${q ? buildTestQuestion(q, qState) : '<div class="empty-state">No question.</div>'}
+      </div>
+    </div>
+    <div class="test-footer-nav">
+      <button class="btn btn-ghost" onclick="navTestQuestion(-1)" ${ts.currentIndex===0?'disabled style="opacity:.4"':''}>← Prev</button>
+      <button class="btn btn-ghost" onclick="clearTestAnswer(${q?.id})">Clear</button>
+      <button class="btn btn-ghost" onclick="toggleTestFlag(${q?.id})">${ts.flagged[q?.id]?'⚑ Unflag':'⚑ Flag'}</button>
+      <button class="btn btn-ghost" onclick="skipTestQuestion()">Skip →</button>
+      <button class="btn btn-primary" style="margin-left:auto" onclick="navTestQuestion(1)" ${ts.currentIndex===ts.questions.length-1?'disabled style="opacity:.4"':''}>Next →</button>
+    </div>
+  </div>
+  ${ts.showSubmitModal ? buildSubmitModal() : ''}`;
+}
+
+function getQuestionNavState(qId) {
+  const ts = state.testSession;
+  if (ts.answers[qId] !== undefined && ts.answers[qId] !== '' &&
+      !(Array.isArray(ts.answers[qId]) && ts.answers[qId].length===0)) return 'answered';
+  if (ts._visited && ts._visited[qId]) return 'visited';
+  return 'not_visited';
+}
+
+function buildTestQuestion(q, qState) {
+  const ts = state.testSession;
+  const selected = ts.answers[q.id];
+  const marksLabel = `+${q.marks_correct} / ${q.marks_incorrect}`;
+
+  let answerUI = '';
+  if (q.question_type === 'single_correct' || q.question_type === 'passage_based') {
+    const opts = [['A',q.option_a],['B',q.option_b],['C',q.option_c],['D',q.option_d]].filter(([,t]) => t);
+    answerUI = opts.map(([letter, text]) => `
+      <div class="test-option ${selected===letter?'selected':''}" onclick="selectTestAnswer(${q.id}, '${letter}')">
+        <div class="test-option-radio"></div>
+        <div>(${letter}) ${esc(text)}</div>
+      </div>
+    `).join('');
+  } else if (q.question_type === 'multi_correct') {
+    const opts = [['A',q.option_a],['B',q.option_b],['C',q.option_c],['D',q.option_d]].filter(([,t]) => t);
+    const selArr = Array.isArray(selected) ? selected : [];
+    answerUI = opts.map(([letter, text]) => `
+      <div class="test-option ${selArr.includes(letter)?'selected':''}" onclick="toggleTestMultiAnswer(${q.id}, '${letter}')">
+        <div class="test-option-checkbox"></div>
+        <div>(${letter}) ${esc(text)}</div>
+      </div>
+    `).join('');
+  } else if (q.question_type === 'integer') {
+    answerUI = `<input type="number" class="test-integer-input" placeholder="Enter integer answer"
+      value="${selected !== undefined ? esc(selected) : ''}"
+      onchange="selectTestAnswer(${q.id}, this.value)" />`;
+  }
+
+  const confidenceUI = (selected !== undefined && selected !== '' && !(Array.isArray(selected) && selected.length===0)) ? `
+    <div class="confidence-row">
+      <button class="confidence-btn ${ts.confidence[q.id]==='sure'?'selected-sure':''}" onclick="rateTestConfidence(${q.id},'sure')">🟢 Sure</button>
+      <button class="confidence-btn ${ts.confidence[q.id]==='unsure'?'selected-unsure':''}" onclick="rateTestConfidence(${q.id},'unsure')">🟡 Unsure</button>
+      <button class="confidence-btn ${ts.confidence[q.id]==='guessing'?'selected-guessing':''}" onclick="rateTestConfidence(${q.id},'guessing')">🔴 Guessing</button>
+    </div>` : '';
+
+  return `
+    <div class="test-q-meta">
+      <span class="tag badge-brand">Q ${q.question_order} of ${ts.questions.length}</span>
+      <span class="tag" style="background:var(--surface2)">Marks: ${marksLabel}</span>
+      <span class="tag" style="background:var(--surface2)">${esc(q.difficulty)}</span>
+    </div>
+    <div class="test-q-text">${esc(q.question_text)}</div>
+    ${answerUI}
+    ${confidenceUI}
+  `;
+}
+
+window.switchTestSection = function(section) {
+  const ts = state.testSession;
+  if (ts.currentSection === section) return;
+  EventManager.onSectionChange(ts.currentSection, section);
+  ts.currentSection = section;
+  const firstInSection = ts.questions.findIndex(q => q.section_name === section);
+  ts.currentIndex = firstInSection >= 0 ? firstInSection : 0;
+  markVisited(ts.questions[ts.currentIndex].id);
+  EventManager.onQuestionView(ts.questions[ts.currentIndex].id);
+  render();
+};
+
+window.jumpToQuestion = function(index) {
+  const ts = state.testSession;
+  ts.currentIndex = index;
+  ts.currentSection = ts.questions[index].section_name;
+  markVisited(ts.questions[index].id);
+  EventManager.onQuestionView(ts.questions[index].id);
+  render();
+};
+
+window.navTestQuestion = function(delta) {
+  const ts = state.testSession;
+  const next = ts.currentIndex + delta;
+  if (next < 0 || next >= ts.questions.length) return;
+  ts.currentIndex = next;
+  ts.currentSection = ts.questions[next].section_name;
+  markVisited(ts.questions[next].id);
+  EventManager.onQuestionView(ts.questions[next].id);
+  render();
+};
+
+function markVisited(qId) {
+  const ts = state.testSession;
+  if (!ts._visited) ts._visited = {};
+  ts._visited[qId] = true;
+}
+
+window.selectTestAnswer = function(qId, value) {
+  const ts = state.testSession;
+  ts.answers[qId] = value;
+  EventManager.onAnswerSelect(qId, value);
+  render();
+};
+
+window.toggleTestMultiAnswer = function(qId, letter) {
+  const ts = state.testSession;
+  const current = Array.isArray(ts.answers[qId]) ? [...ts.answers[qId]] : [];
+  const idx = current.indexOf(letter);
+  if (idx >= 0) current.splice(idx, 1); else current.push(letter);
+  ts.answers[qId] = current;
+  EventManager.onAnswerSelect(qId, current.slice().sort().join(''));
+  render();
+};
+
+window.clearTestAnswer = function(qId) {
+  if (qId === undefined || qId === null) return;
+  const ts = state.testSession;
+  if (ts.answers[qId] === undefined) return;
+  EventManager.onAnswerClear(qId);
+  delete ts.answers[qId];
+  delete ts.confidence[qId];
+  render();
+};
+
+window.toggleTestFlag = function(qId) {
+  if (qId === undefined || qId === null) return;
+  const ts = state.testSession;
+  ts.flagged[qId] = !ts.flagged[qId];
+  EventManager.onFlag(qId, ts.flagged[qId]);
+  render();
+};
+
+window.skipTestQuestion = function() {
+  const ts = state.testSession;
+  const q = ts.questions[ts.currentIndex];
+  if (q) EventManager.onSkip(q.id);
+  navTestQuestion(1);
+};
+
+window.rateTestConfidence = function(qId, rating) {
+  const ts = state.testSession;
+  ts.confidence[qId] = rating;
+  EventManager.onConfidenceRate(qId, rating);
+  render();
+};
+
+window.toggleNavGrid = function() {
+  const panel = document.getElementById('test-navgrid-panel');
+  if (panel) panel.classList.toggle('open');
+};
+
+// ── SUBMIT FLOW ───────────────────────────────────────────────────────────────
+window.openSubmitModal = function() {
+  state.testSession.showSubmitModal = true;
+  render();
+};
+window.closeSubmitModal = function() {
+  state.testSession.showSubmitModal = false;
+  render();
+};
+window.selectFinalFeeling = function(feeling) {
+  state.testSession.finalFeeling = feeling;
+  render();
+};
+
+function buildSubmitModal() {
+  const ts = state.testSession;
+  const attempted = Object.keys(ts.answers).filter(k => {
+    const v = ts.answers[k];
+    return v !== undefined && v !== '' && !(Array.isArray(v) && v.length===0);
+  }).length;
+  const skipped = ts.questions.length - attempted;
+  const flagged = Object.keys(ts.flagged).filter(k => ts.flagged[k]).length;
+  const feelings = [['normal','Normal'],['rushed','Rushed'],['panicked','Panicked']];
+
+  return `
+  <div class="modal-overlay" onclick="if(event.target===this)closeSubmitModal()">
+    <div class="modal-card">
+      <div class="modal-title">Review before submitting</div>
+      <div class="review-stat-row"><span>Attempted</span><span class="font-bold" style="color:var(--green)">${attempted}</span></div>
+      <div class="review-stat-row"><span>Skipped</span><span class="font-bold" style="color:var(--amber)">${skipped}</span></div>
+      <div class="review-stat-row"><span>Flagged</span><span class="font-bold" style="color:var(--brand2)">${flagged}</span></div>
+      <p class="text-sm mt-2" style="font-weight:600">How did the final 30 minutes feel?</p>
+      <div class="feeling-grid">
+        ${feelings.map(([id,label]) => `
+          <div class="feeling-opt ${ts.finalFeeling===id?'selected':''}" onclick="selectFinalFeeling('${id}')">${label}</div>
+        `).join('')}
+      </div>
+      <div class="flex gap-1" style="margin-top:1.25rem">
+        <button class="btn btn-ghost flex-1" onclick="closeSubmitModal()">Go Back and Review</button>
+        <button class="btn btn-primary flex-1" ${ts.finalFeeling?'':'disabled style="opacity:.5;cursor:not-allowed"'} onclick="confirmSubmitTest()" ${ts.submitting?'disabled':''}>
+          ${ts.submitting ? 'Submitting…' : 'Submit Test'}
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.confirmSubmitTest = async function() {
+  const ts = state.testSession;
+  if (!ts.finalFeeling || ts.submitting) return;
+  await doSubmitTest(ts.finalFeeling);
+};
+
+async function doSubmitTest(feelingOverride) {
+  const ts = state.testSession;
+  if (!ts || ts.submitting) return;
+  ts.submitting = true;
+  render();
+
+  if (ts.timerInterval) clearInterval(ts.timerInterval);
+
+  // Normalize answers to {question_id(string): answer} for the API,
+  // joining multi-select arrays into a sorted letter string.
+  const finalAnswers = {};
+  for (const [qId, val] of Object.entries(ts.answers)) {
+    finalAnswers[qId] = Array.isArray(val) ? val.slice().sort().join('') : val;
+  }
+
+  await EventManager.onSubmit(finalAnswers);
+
+  const result = await post(`/api/sessions/${ts.sessionId}/submit`, {
+    answers: finalAnswers,
+    final_30min_feeling: feelingOverride === 'timed_out' ? 'panicked' : feelingOverride,
+    energy_level: ts.energyLevelAtStart || 3,
+  });
+
+  const sessionId = ts.sessionId;
+  EventManager.destroy();
+  state.testSession = null;
+  state.preTestModal = null;
+
+  if (!result) {
+    state.page = 'tests';
+    await loadPageData();
+    render();
+    return;
+  }
+
+  // The behavioral pipeline (mistake classification, rank leakage) runs as a
+  // background task after submit returns, so it may not be done yet. Poll
+  // briefly for analysis_ready before showing the result page, so "fix this
+  // first" and per-question mistake labels are there on first paint rather
+  // than appearing to be missing.
+  let fullResult = await api(`/api/sessions/${sessionId}/result`);
+  let attempts = 0;
+  while (fullResult && !fullResult.analysis_ready && attempts < 10) {
+    await new Promise(res => setTimeout(res, 300));
+    fullResult = await api(`/api/sessions/${sessionId}/result`);
+    attempts++;
+  }
+
+  state.lastTestResult = result;
+  state.viewingResult = fullResult;
+  state.resultFilter = 'all';
+  state.resultOrigin = 'tests';
+  state.page = 'result';
+  // Phase 4: refresh the Digital Twin after every test so mentor and
+  // dashboard reflect the latest behavioral profile immediately.
+  await loadTwin();
+  await loadRevisionCount();  // Phase 7: refresh revision badge
+  await loadPageData();
+  render();
+}
+
+// ── TEST RESULT ───────────────────────────────────────────────────────────────
+const MISTAKE_TYPE_LABELS = {
+  avoidance: 'Skipped — avoidable', guessing: 'Guessed', time_pressure: 'Rushed under pressure',
+  careless: 'Careless slip', conceptual: "Concept gap", formula_recall: 'Formula recall',
+  calculation: 'Calculation error', misread: 'Misread the question',
+};
+
+// Phase 7 — human-readable labels for "correct but ambiguous" warnings
+const AMBIGUOUS_REASON_LABELS = {
+  guessed_but_correct: { text: 'Right answer, but it looks guessed — fast with no real working', icon: '🎲' },
+  too_long_for_right_answer: { text: 'Got it right, but took much longer than usual — concept still shaky', icon: '🐢' },
+  flip_flopped_to_correct: { text: 'Landed on the right answer after several changes — likely elimination, not a clean solve', icon: '🔀' },
+};
+
+window.viewPastResult = async function(sessionId) {
+  const result = await api(`/api/sessions/${sessionId}/result`);
+  if (!result) return;
+  state.viewingResult = result;
+  state.resultOrigin = state.page === 'result' ? (state.resultOrigin || 'tests') : state.page;
+  state.page = 'result';
+  render();
+  // Start polling if analysis not yet ready
+  if (!result.analysis_ready) {
+    startAnalysisPolling(sessionId);
+  }
+};
+
+// Poll GET /api/sessions/{sid}/analysis every 3s until ready (max 60s)
+function startAnalysisPolling(sessionId) {
+  let attempts = 0;
+  const maxAttempts = 20; // 60s
+  const timer = setInterval(async () => {
+    attempts++;
+    if (attempts > maxAttempts) { clearInterval(timer); return; }
+    try {
+      const data = await api(`/api/sessions/${sessionId}/analysis`);
+      if (data && data.analysis_ready) {
+        clearInterval(timer);
+        // Merge analysis data back into viewingResult
+        if (state.viewingResult && state.viewingResult.session) {
+          state.viewingResult.session.behavioral_flags_json = data.behavioral_flags || {};
+          state.viewingResult.session.leakage_report_json = data.leakage_report || {};
+          state.viewingResult.analysis_ready = true;
+          // Reload full result to get updated question_results with mistake types
+          const fresh = await api(`/api/sessions/${sessionId}/result`);
+          if (fresh) state.viewingResult = fresh;
+          // Also refresh twin since pipeline updated it
+          await loadTwin();
+        }
+        // Phase 9: keep the Deep Review screen in sync too, if it's open on this session
+        if (state.reviewSessionId === sessionId) {
+          const freshReview = await api(`/api/sessions/${sessionId}/result`);
+          if (freshReview) state.reviewData = freshReview;
+        }
+        if (state.page === 'result' || state.page === 'review') render();
+      }
+    } catch(e) { /* non-fatal */ }
+  }, 3000);
+}
+
+// ── PHASE 9: DEEP PERFORMANCE REVIEW ────────────────────────────────────────
+window.openReview = async function(sessionId) {
+  const result = await api(`/api/sessions/${sessionId}/result`);
+  if (!result) return;
+  state.reviewSessionId = sessionId;
+  state.reviewData = result;
+  state.reviewTab = 1;
+  state.reviewQFilter = 'all';
+  state.reviewExpanded = {};
+  state.page = 'review';
+  render();
+  if (!result.analysis_ready) {
+    startAnalysisPolling(sessionId);
+  }
+};
+
+window.setReviewTab = function(n) {
+  state.reviewTab = n;
+  render();
+  // Tab 5 fires the AI Mentor call automatically the moment the tab is opened —
+  // no button click required, per the Phase 9 spec.
+  if (n === 5) fetchReviewMentor();
+};
+
+window.toggleReviewRow = function(qid) {
+  state.reviewExpanded[qid] = !state.reviewExpanded[qid];
+  render();
+};
+
+window.setReviewQFilter = function(filter) {
+  state.reviewQFilter = filter;
+  render();
+};
+
+async function fetchReviewMentor() {
+  const sid = state.reviewSessionId;
+  const r = state.reviewData;
+  if (!sid || !r) return;
+  const cache = state.reviewMentor[sid];
+  if (cache && (cache.loading || cache.reply)) return; // already fired for this session
+
+  state.reviewMentor[sid] = { loading: true, reply: null };
+  render();
+
+  const s = r.session;
+  const templateName = r.template_name || s.template_name || 'this test';
+  const prompt = `I just finished ${templateName} and scored ${s.raw_score}/${s.max_score}. ` +
+    `Based on this test's data, give me: (1) the single most important behavioral pattern I must fix, ` +
+    `(2) the single most important knowledge gap to address, and (3) exactly what I should do tomorrow.`;
+
+  const resp = await post('/api/chat', { student_id: state.student.id, message: prompt });
+  state.reviewMentor[sid] = {
+    loading: false,
+    reply: resp?.reply || 'I could not reach the AI Mentor right now. Please try again in a moment.',
+  };
+  render();
+}
+
+window.reviewMentorQuickReply = function(msg) {
+  state.page = 'chat';
+  state.prefillChatMessage = msg;
+  loadPageData().then(() => render());
+};
+
+// Helper: navigate to chat with a pre-filled message
+window.askMentorWith = function(prompt) {
+  state.page = 'chat';
+  state.prefillChatMessage = prompt;
+  loadPageData().then(() => render());
+};
+
+function buildTestResult() {
+  const r = state.viewingResult;
+  if (!r) return `<div class="empty-state"><div class="em">📄</div><p>No result loaded.</p><button class="btn btn-primary mt-2" onclick="navigate('tests')">Back to tests</button></div>`;
+
+  const s = r.session;
+  const pct = s.max_score ? Math.round((s.raw_score / s.max_score) * 100) : 0;
+  const qrs = r.question_results || [];
+  const correct = qrs.filter(q => q.is_correct).length;
+  const wrong = qrs.filter(q => !q.is_correct && !q.is_skipped).length;
+  const skipped = qrs.filter(q => q.is_skipped).length;
+  const leakage = s.leakage_report_json || {};
+  const flags = s.behavioral_flags_json || {};
+  const analysisReady = r.analysis_ready;
+
+  const filter = state.resultFilter || 'all';
+  const ambiguousCount = qrs.filter(q => q.is_correct && q.is_ambiguous_correct).length;
+  const filtered = qrs.filter(q => {
+    if (filter === 'wrong') return !q.is_correct && !q.is_skipped;
+    if (filter === 'skipped') return q.is_skipped;
+    if (filter === 'correct') return q.is_correct;
+    if (filter === 'ambiguous') return q.is_correct && q.is_ambiguous_correct;
+    return true;
+  });
+
+  // Build analysis panel (shown when ready, or spinner if not)
+  let analysisPanel = '';
+  if (!analysisReady) {
+    analysisPanel = `
+      <div class="card mb-2" id="analysis-loading-card">
+        <div class="flex items-center gap-2">
+          <div class="spinner" style="width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--brand2);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>
+          <div>
+            <div class="text-sm font-bold">Analyzing your test…</div>
+            <div class="text-xs text-muted">Behavioral patterns, mistake classification, rank leakage — this takes ~15 seconds</div>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    // Analysis is ready — show leakage summary + top 3 flags
+    const leakageItems = Object.entries(leakage.breakdown || {}).map(([k,v]) => ({mistake_type:k, marks_lost:v.marks||0, count:v.count||0})).sort((a,b)=>b.marks_lost-a.marks_lost);
+    const topLeakage = leakageItems.slice(0, 3);
+    const panicData = flags.panic || {};
+    const fatigueData = flags.fatigue || {};
+    const skipData = flags.skip_pattern || {};
+
+    // Build flag rows from behavioral data
+    const detectedFlags = [];
+    if (panicData.detected) detectedFlags.push({icon:'⚡', label:'Panic Detected', detail:`${panicData.correct_changed_to_wrong||0} correct answers changed to wrong in final ${(panicData.panic_window_start_mins||0).toFixed(0)} mins — lost ${(panicData.marks_lost_to_panic||0).toFixed(1)} marks`, sev:'high'});
+    if (fatigueData.detected) detectedFlags.push({icon:'😴', label:'Fatigue Detected', detail:`Accuracy dropped after minute ${fatigueData.fatigue_threshold_mins||'?'}`, sev:'medium'});
+    const avoidCount = (skipData.sight_skipped||[]).length;
+    if (avoidCount > 0) detectedFlags.push({icon:'🚫', label:`${avoidCount} Questions Avoided`, detail:'Viewed < 10s and skipped — potential avoidance pattern', sev:'medium'});
+    const totalLeaked = leakageItems.reduce((s,i) => s + (i.marks_lost||0), 0);
+
+    analysisPanel = `
+      <div class="card mb-2" style="border:1px solid var(--brand)">
+        <div class="flex items-center gap-2 mb-2">
+          <span style="font-size:1.1rem">🔬</span>
+          <div class="section-title" style="margin:0">Behavioral Analysis</div>
+          <span class="tag badge-green" style="margin-left:auto">Ready</span>
+        </div>
+
+        ${totalLeaked > 0 ? `
+        <div style="background:var(--surface2);border-radius:10px;padding:1rem;margin-bottom:1rem">
+          <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Rank Leakage — ${totalLeaked.toFixed(1)} marks lost this test</div>
+          ${topLeakage.map(item => {
+            const colors = {conceptual:'#f87171',calculation:'#fbbf24',time_pressure:'#a78bfa',guessing:'#94a3b8',careless:'#fb923c',avoidance:'#ef4444'};
+            const col = colors[item.mistake_type] || '#94a3b8';
+            const label = MISTAKE_TYPE_LABELS[item.mistake_type] || item.mistake_type;
+            const barPct = totalLeaked > 0 ? Math.min(100, (item.marks_lost / totalLeaked) * 100) : 0;
+            return `<div class="flex items-center gap-2 mb-2">
+              <div style="width:100px;font-size:.78rem;color:var(--text2);flex-shrink:0">${esc(label)}</div>
+              <div style="flex:1;background:var(--border);border-radius:4px;height:8px">
+                <div style="height:8px;border-radius:4px;background:${col};width:${barPct.toFixed(0)}%"></div>
+              </div>
+              <div style="font-size:.78rem;font-weight:700;color:${col};width:40px;text-align:right">${item.marks_lost?.toFixed(1)||0}</div>
+              <div class="text-xs text-muted" style="width:30px">${item.count}Q</div>
+            </div>`;
+          }).join('')}
+          ${leakage.fix_this_first ? `
+            <div style="margin-top:.75rem;padding:.75rem;background:var(--brand-glow);border:1px solid var(--brand);border-radius:8px">
+              <div class="text-xs font-bold" style="color:var(--brand2);margin-bottom:.3rem">🎯 Fix This First</div>
+              <div class="text-sm">${esc(leakage.fix_this_first)}</div>
+              <button class="btn btn-sm" style="margin-top:.5rem;background:var(--brand);color:#fff" onclick="askMentorWith('How do I fix my ${esc(leakage.top_leakage_source||'top')} errors? I just scored ${s.raw_score}/${s.max_score}.')">Ask Mentor →</button>
+            </div>
+          ` : ''}
+        </div>` : ''}
+
+        ${detectedFlags.length > 0 ? `
+        <div>
+          <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Behavioral Flags</div>
+          ${detectedFlags.map(f => {
+            const sevColor = f.sev==='high'?'var(--red)':f.sev==='medium'?'var(--amber)':'var(--green)';
+            return `<div class="flex items-start gap-2 mb-2" style="padding:.65rem .85rem;background:var(--surface2);border-radius:8px;border-left:3px solid ${sevColor}">
+              <span>${f.icon}</span>
+              <div style="flex:1">
+                <div class="text-sm font-bold">${esc(f.label)}</div>
+                <div class="text-xs text-muted">${esc(f.detail)}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>` : '<div class="text-sm text-muted">No significant behavioral flags detected this test.</div>'}
+      </div>`;
+  }
+
+  return `
+  <div class="card mb-2">
+    <div style="display:flex;align-items:flex-start;gap:1.5rem;flex-wrap:wrap">
+      <div>
+        <div class="text-xs text-muted mb-1">${esc(s.submitted_at ? s.submitted_at.split(' ')[0] : '')} · ${esc(r.template_name || s.template_name || 'Test')}</div>
+        <div style="font-size:2.5rem;font-weight:700;font-family:'Syne',sans-serif;color:${pct>70?'var(--green)':pct>50?'var(--amber)':'var(--red)'};line-height:1">${pct}%</div>
+        <div class="text-sm text-muted mt-1">${s.raw_score} / ${s.max_score} marks</div>
+      </div>
+      <div style="display:flex;gap:1.5rem;margin-top:.25rem">
+        <div style="text-align:center"><div class="font-bold" style="color:var(--green);font-size:1.3rem">${correct}</div><div class="text-xs text-muted">Correct</div></div>
+        <div style="text-align:center"><div class="font-bold" style="color:var(--red);font-size:1.3rem">${wrong}</div><div class="text-xs text-muted">Wrong</div></div>
+        <div style="text-align:center"><div class="font-bold" style="color:var(--amber);font-size:1.3rem">${skipped}</div><div class="text-xs text-muted">Skipped</div></div>
+      </div>
+    </div>
+  </div>
+
+  ${analysisPanel}
+
+  <div class="flex items-center gap-1 mb-2" style="flex-wrap:wrap">
+    ${[['all','All'],['wrong','Wrong'],['skipped','Skipped'],['correct','Correct']].map(([id,label]) => `
+      <button class="btn ${filter===id?'btn-primary':'btn-ghost'} btn-sm" onclick="setResultFilter('${id}')">${label}</button>
+    `).join('')}
+    ${ambiguousCount > 0 ? `
+      <button class="btn btn-sm" style="${filter==='ambiguous'?'background:var(--amber);color:#000':'background:#fbbf2418;color:var(--amber);border:1px solid #fbbf2444'}"
+              onclick="setResultFilter('ambiguous')">⚠️ Needs Review (${ambiguousCount})</button>
+    ` : ''}
+    <div style="margin-left:auto;display:flex;gap:.5rem">
+      ${analysisReady ? `<button class="btn btn-sm" style="background:var(--brand);color:#fff" onclick="openReview(${s.id})">🔬 Full Review</button>` : ''}
+      ${analysisReady ? `<button class="btn btn-sm" style="background:var(--brand);color:#fff" onclick="navigate('rankintel')">View Full Analysis 🎯</button>` : ''}
+      <button class="btn btn-ghost btn-sm" onclick="askMentorWith('I just finished a test and scored ${pct}% (${s.raw_score}/${s.max_score}). What should I do next?')">Ask Mentor 🤖</button>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:.75rem">
+    ${filtered.length ? filtered.map(q => buildResultQuestionCard(q)).join('') : '<div class="empty-state"><div class="em">✓</div><p>No questions in this filter.</p></div>'}
+  </div>
+  <button class="btn btn-ghost mt-2" onclick="navigate('${state.resultOrigin === 'dashboard' ? 'dashboard' : 'tests'}')">← Back to ${state.resultOrigin === 'dashboard' ? 'dashboard' : 'test history'}</button>`;
+}
+
+function buildResultQuestionCard(q) {
+  const statusColor = q.is_correct ? 'var(--green)' : q.is_skipped ? 'var(--amber)' : 'var(--red)';
+  const statusLabel = q.is_correct ? 'Correct' : q.is_skipped ? 'Skipped' : 'Wrong';
+  const opts = [['A',q.option_a],['B',q.option_b],['C',q.option_c],['D',q.option_d]].filter(([,t]) => t);
+  const mistakeLabel = q.classified_mistake_type ? MISTAKE_TYPE_LABELS[q.classified_mistake_type] || q.classified_mistake_type : null;
+
+  // Phase 7 — "correct but ambiguous" warning. Only shown when the answer
+  // was right AND the system flagged it (guessed / too slow / flip-flopped).
+  // Never shown on every correct answer — only the ones that deserve a
+  // second look so the student doesn't mistake luck for mastery.
+  const ambiguous = q.is_correct && q.is_ambiguous_correct && AMBIGUOUS_REASON_LABELS[q.ambiguous_reason];
+
+  return `
+  <div class="card-sm" ${ambiguous ? 'style="border-left:3px solid var(--amber)"' : ''}>
+    <div class="flex items-center gap-1 mb-2">
+      <span class="tag" style="background:${statusColor}22;color:${statusColor}">${statusLabel}</span>
+      <span class="tag" style="background:var(--surface2)">${esc(q.chapter_name)}</span>
+      ${mistakeLabel ? `<span class="tag" style="background:var(--surface2)">${esc(mistakeLabel)}</span>` : ''}
+      ${ambiguous ? `<span class="tag" style="background:#fbbf2422;color:var(--amber);border:1px solid #fbbf2444">⚠️ Needs review</span>` : ''}
+      <span class="text-xs text-muted" style="margin-left:auto">${q.marks_awarded>0?'+':''}${q.marks_awarded} marks</span>
+    </div>
+    ${ambiguous ? `
+      <div style="display:flex;align-items:center;gap:.5rem;background:#fbbf2412;border:1px solid #fbbf2433;
+                  border-radius:var(--r);padding:.5rem .65rem;margin-bottom:.65rem">
+        <span style="font-size:1rem">${ambiguous.icon}</span>
+        <span class="text-xs" style="color:var(--amber);font-weight:600">${esc(ambiguous.text)}</span>
+      </div>
+    ` : ''}
+    <div class="text-sm mb-2">${esc(q.question_text)}</div>
+    ${opts.length ? `
+      <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.75rem">
+        ${opts.map(([letter,text]) => {
+          const isCorrectOpt = letter === (q.correct_answer||'').trim().toUpperCase();
+          const isSelectedOpt = letter === (q.selected_answer||'').trim().toUpperCase();
+          let style = 'border:1px solid var(--border2);background:var(--surface2)';
+          if (isCorrectOpt) style = 'border:1px solid var(--green);background:#22d3a015;color:var(--green)';
+          else if (isSelectedOpt && !isCorrectOpt) style = 'border:1px solid var(--red);background:#f8717115;color:var(--red)';
+          return `<div style="padding:.5rem .75rem;border-radius:var(--r);font-size:.85rem;${style}">
+            (${letter}) ${esc(text)} ${isCorrectOpt?' ✓':''}${isSelectedOpt && !isCorrectOpt?' ✗ (your answer)':''}
+          </div>`;
+        }).join('')}
+      </div>
+    ` : `
+      <div class="text-xs text-muted mb-2">Your answer: <strong>${esc(q.selected_answer || '—')}</strong> · Correct: <strong style="color:var(--green)">${esc(q.correct_answer)}</strong></div>
+    `}
+    ${q.solution_text ? `
+      <details>
+        <summary class="text-xs" style="cursor:pointer;color:var(--brand2)">Show solution</summary>
+        <div class="text-xs text-muted mt-1">${esc(q.solution_text)}</div>
+      </details>
+    ` : ''}
+  </div>`;
+}
+
+window.setResultFilter = function(filter) {
+  state.resultFilter = filter;
+  render();
+};
+
+// ── PHASE 9: DEEP PERFORMANCE REVIEW (5-tab post-test review screen) ───────
+function buildTestReview() {
+  const r = state.reviewData;
+  if (!r) return `<div class="empty-state"><div class="em">🔬</div><p>No review loaded.</p><button class="btn btn-primary mt-2" onclick="navigate('tests')">Back to tests</button></div>`;
+  const s = r.session;
+  const tabs = [
+    [1, 'Overview'], [2, 'Question by Question'], [3, 'Behavioral Analysis'],
+    [4, 'Rank Leakage Detail'], [5, 'AI Mentor'],
+  ];
+  const active = state.reviewTab;
+
+  return `
+  <div class="card mb-2">
+    <div class="flex items-center gap-2" style="flex-wrap:wrap">
+      <div>
+        <div class="text-xs text-muted mb-1">${esc((s.submitted_at||'').split(' ')[0])} · ${esc(r.template_name || s.template_name || 'Test')}</div>
+        <div style="font-size:1.4rem;font-weight:700;font-family:'Syne',sans-serif">Deep Performance Review</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="navigate('${state.resultOrigin==='dashboard'?'dashboard':'tests'}')">← Back</button>
+    </div>
+  </div>
+  <div class="flex items-center gap-1 mb-2" style="flex-wrap:wrap">
+    ${tabs.map(([id,label]) => `<button class="btn ${active===id?'btn-primary':'btn-ghost'} btn-sm" onclick="setReviewTab(${id})">${id}. ${label}</button>`).join('')}
+  </div>
+  ${!r.analysis_ready ? `
+    <div class="card mb-2">
+      <div class="flex items-center gap-2">
+        <div class="spinner"></div>
+        <div>
+          <div class="text-sm font-bold">Analyzing your test…</div>
+          <div class="text-xs text-muted">This screen updates automatically once analysis finishes (~15s).</div>
+        </div>
+      </div>
+    </div>` : ''}
+  ${active===1 ? buildReviewTab1(r) : ''}
+  ${active===2 ? buildReviewTab2(r) : ''}
+  ${active===3 ? buildReviewTab3(r) : ''}
+  ${active===4 ? buildReviewTab4(r) : ''}
+  ${active===5 ? buildReviewTab5(r) : ''}
+  `;
+}
+
+// TAB 1 — OVERVIEW
+function buildReviewTab1(r) {
+  const s = r.session;
+  const flags = s.behavioral_flags_json || {};
+  const leakage = s.leakage_report_json || {};
+  const qrs = r.question_results || [];
+  const correct = qrs.filter(q => q.is_correct).length;
+  const wrong = qrs.filter(q => !q.is_correct && !q.is_skipped).length;
+  const skipped = qrs.filter(q => q.is_skipped).length;
+  const pct = s.max_score ? Math.round((s.raw_score / s.max_score) * 100) : 0;
+
+  const panic = flags.panic || {};
+  const fatigue = flags.fatigue || {};
+  const skipPattern = flags.skip_pattern || {};
+  const selection = flags.question_selection || {};
+
+  const flagItems = [];
+  if (panic.detected) flagItems.push({icon:'⚡', label:'Panic in the final stretch', detail:`${panic.correct_changed_to_wrong||0} correct answer(s) flipped to wrong after minute ${(panic.panic_window_start_mins||0).toFixed(0)} — cost ${(panic.marks_lost_to_panic||0).toFixed(1)} marks`, sev:'high'});
+  if (fatigue.detected) flagItems.push({icon:'😴', label:`Fatigue after minute ${fatigue.fatigue_threshold_mins ?? '?'}`, detail:`Accuracy peaked at ${fatigue.peak_accuracy}% then dropped and never recovered`, sev:'medium'});
+  const avoidCount = (skipPattern.sight_skipped||[]).length;
+  if (avoidCount > 0) flagItems.push({icon:'🚫', label:`${avoidCount} question(s) avoided on sight`, detail:'Viewed for under 10 seconds then skipped without an attempt', sev:'medium'});
+  if ((selection.selection_score ?? 1) < 0.6) flagItems.push({icon:'🎲', label:'Suboptimal question selection', detail: selection.advice || 'Selection strategy could be improved', sev:'medium'});
+  const topFlags = flagItems.slice(0, 3);
+
+  return `
+  <div class="grid-2 mb-2">
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Score</div>
+      <div style="font-size:2.5rem;font-weight:700;font-family:'Syne',sans-serif;color:${pct>70?'var(--green)':pct>50?'var(--amber)':'var(--red)'}">${pct}%</div>
+      <div class="text-sm text-muted mb-2">${s.raw_score} / ${s.max_score} marks</div>
+      <div style="display:flex;gap:1.5rem">
+        <div style="text-align:center"><div class="font-bold" style="color:var(--green)">${correct}</div><div class="text-xs text-muted">Correct</div></div>
+        <div style="text-align:center"><div class="font-bold" style="color:var(--red)">${wrong}</div><div class="text-xs text-muted">Wrong</div></div>
+        <div style="text-align:center"><div class="font-bold" style="color:var(--amber)">${skipped}</div><div class="text-xs text-muted">Skipped</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Actual vs Potential Score</div>
+      <div style="display:flex;align-items:center;gap:1.5rem">
+        <div style="text-align:center">
+          <div class="text-xs text-muted mb-1">Actual</div>
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Syne',sans-serif">${leakage.actual_score ?? s.raw_score}</div>
+        </div>
+        <div style="color:var(--muted);font-size:1.2rem">→</div>
+        <div style="text-align:center">
+          <div class="text-xs text-muted mb-1">Potential</div>
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--brand2)">${leakage.potential_score ?? '—'}</div>
+        </div>
+      </div>
+      ${leakage.fix_this_first ? `<div class="text-xs text-muted mt-2">${esc(leakage.fix_this_first)}</div>` : ''}
+    </div>
+  </div>
+  <div class="card mb-2">
+    <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Top Behavioral Flags</div>
+    ${topFlags.length ? topFlags.map(f => {
+      const sevColor = f.sev==='high' ? 'var(--red)' : 'var(--amber)';
+      return `<div class="flex items-start gap-2 mb-2" style="padding:.65rem .85rem;background:var(--surface2);border-radius:8px;border-left:3px solid ${sevColor}">
+        <span>${f.icon}</span>
+        <div style="flex:1"><div class="text-sm font-bold">${esc(f.label)}</div><div class="text-xs text-muted">${esc(f.detail)}</div></div>
+      </div>`;
+    }).join('') : '<div class="text-sm text-muted">No significant behavioral flags this test.</div>'}
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Fatigue Curve</div>
+      ${(flags.fatigue?.curve||[]).length ? `<div class="chart-wrap"><canvas id="reviewFatigueChart"></canvas></div>` : '<div class="text-sm text-muted">Not enough data for this test.</div>'}
+    </div>
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Section Allocation — Actual vs Optimal</div>
+      ${Object.keys(flags.section_allocation||{}).length ? `<div class="chart-wrap"><canvas id="reviewSectionChart"></canvas></div>` : '<div class="text-sm text-muted">Not enough data for this test.</div>'}
+    </div>
+  </div>`;
+}
+
+// TAB 2 — QUESTION BY QUESTION
+function buildReviewTab2(r) {
+  const qrs = r.question_results || [];
+  const filter = state.reviewQFilter;
+  const filtered = qrs.filter(q => {
+    if (filter === 'incorrect') return !q.is_correct && !q.is_skipped;
+    if (filter === 'skipped') return q.is_skipped;
+    if (filter === 'changed') return (q.answer_change_count||0) > 0;
+    return true;
+  });
+  const speedLabel = (ratio) => {
+    if (ratio === null || ratio === undefined) return '—';
+    if (ratio < 0.7) return 'Fast';
+    if (ratio > 1.3) return 'Slow';
+    return 'Normal';
+  };
+  const speedColor = (label) => label==='Fast' ? 'var(--blue)' : label==='Slow' ? 'var(--red)' : label==='Normal' ? 'var(--green)' : 'var(--muted)';
+
+  return `
+  <div class="card">
+    <div class="flex items-center gap-1 mb-2" style="flex-wrap:wrap">
+      ${[['all','All'],['incorrect','Incorrect'],['skipped','Skipped'],['changed','Changed Answers']].map(([id,label]) => `
+        <button class="btn ${filter===id?'btn-primary':'btn-ghost'} btn-sm" onclick="setReviewQFilter('${id}')">${label}</button>
+      `).join('')}
+    </div>
+    <div style="overflow-x:auto">
+      <table class="table">
+        <thead><tr>
+          <th>Q#</th><th>Chapter</th><th>Difficulty</th><th>Your Answer</th><th>Correct</th>
+          <th>Time</th><th>Speed</th><th>Mistake Type</th><th>Confidence</th><th>Changes</th>
+        </tr></thead>
+        <tbody>
+          ${filtered.map((q, i) => {
+            const speed = speedLabel(q.time_ratio);
+            const mistakeLabel = q.classified_mistake_type ? (MISTAKE_TYPE_LABELS[q.classified_mistake_type]||q.classified_mistake_type) : '—';
+            const confText = (q.mistake_confidence && q.mistake_confidence > 0)
+              ? (q.mistake_confidence > 0.6 ? `${Math.round(q.mistake_confidence*100)}%` : `possibly (${Math.round(q.mistake_confidence*100)}%)`)
+              : '—';
+            const changedInPanic = (q.answer_change_count||0) > 0 && q.in_panic_window;
+            const expanded = state.reviewExpanded[q.question_id];
+            const timeSecs = q.time_spent_ms ? Math.round(q.time_spent_ms/1000) : 0;
+            const opts = [['A',q.option_a],['B',q.option_b],['C',q.option_c],['D',q.option_d]].filter(([,t]) => t);
+            return `
+            <tr style="cursor:pointer;${changedInPanic ? 'background:#fbbf2415' : ''}" onclick="toggleReviewRow(${q.question_id})">
+              <td>${i+1}</td>
+              <td>${esc(q.chapter_name||'')}</td>
+              <td style="text-transform:capitalize">${esc(q.difficulty||'')}</td>
+              <td>${esc(q.selected_answer||'—')}</td>
+              <td style="color:var(--green)">${esc(q.correct_answer||'')}</td>
+              <td>${timeSecs}s</td>
+              <td><span class="tag" style="background:${speedColor(speed)}22;color:${speedColor(speed)}">${speed}</span></td>
+              <td>${esc(mistakeLabel)}</td>
+              <td>${confText}</td>
+              <td>${q.answer_change_count||0}${changedInPanic ? ' ⚠️' : ''}</td>
+            </tr>
+            ${expanded ? `
+            <tr><td colspan="10" style="background:var(--surface2)">
+              <div class="text-sm mb-2">${esc(q.question_text)}</div>
+              ${opts.length ? opts.map(([letter,text]) => `<div class="text-xs text-muted">(${letter}) ${esc(text)}</div>`).join('') : ''}
+              ${q.solution_text ? `<div class="text-xs mt-2" style="color:var(--brand2)">Solution: ${esc(q.solution_text)}</div>` : ''}
+            </td></tr>` : ''}
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${!filtered.length ? '<div class="empty-state"><div class="em">✓</div><p>No questions in this filter.</p></div>' : ''}
+  </div>`;
+}
+
+// TAB 3 — BEHAVIORAL ANALYSIS
+function buildReviewTab3(r) {
+  const s = r.session;
+  const flags = s.behavioral_flags_json || {};
+  const panic = flags.panic || {};
+  const fatigue = flags.fatigue || {};
+  const skip = flags.skip_pattern || {};
+  const alloc = flags.section_allocation || {};
+  const selection = flags.question_selection || {};
+  const qrs = r.question_results || [];
+  const qNo = (qid) => { const idx = qrs.findIndex(q => q.question_id === qid); return idx >= 0 ? idx+1 : '?'; };
+
+  const skipGroups = [
+    {label:'Sight-skipped (viewed <10s, never attempted)', ids: skip.sight_skipped||[], color:'var(--red)'},
+    {label:'Abandoned after attempt (viewed >30s, never answered)', ids: skip.attempt_abandoned||[], color:'var(--amber)'},
+    {label:'Uncertain — revisited or changed answer before locking in', ids: [...(skip.uncertain_correct||[]), ...(skip.uncertain_wrong||[])], color:'var(--blue)'},
+  ];
+
+  return `
+  <div class="grid-2 mb-2">
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Fatigue</div>
+      ${(fatigue.curve||[]).length ? `<div class="chart-wrap"><canvas id="reviewFatigueChart2"></canvas></div>` : '<div class="text-sm text-muted">Not enough data.</div>'}
+      <div class="text-xs text-muted mt-2">${fatigue.detected ? `Accuracy peaked at ${fatigue.peak_accuracy}%, then dropped and stayed down after minute <strong style="color:var(--amber)">${fatigue.fatigue_threshold_mins}</strong>.` : 'No sustained fatigue drop detected this test.'}</div>
+    </div>
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Panic Analysis</div>
+      <div class="review-stat-row"><span class="text-muted">Normal change rate</span><span>${(panic.normal_change_rate_per_min ?? 0).toFixed(2)}/min</span></div>
+      <div class="review-stat-row"><span class="text-muted">Panic-window change rate</span><span style="color:${panic.detected?'var(--red)':'var(--text)'}">${(panic.panic_change_rate_per_min ?? 0).toFixed(2)}/min</span></div>
+      <div class="review-stat-row"><span class="text-muted">Correct → wrong flips</span><span>${panic.correct_changed_to_wrong||0}</span></div>
+      <div class="review-stat-row"><span class="text-muted">Marks lost to panic</span><span style="color:var(--red)">${(panic.marks_lost_to_panic||0).toFixed(1)}</span></div>
+      <div class="text-xs mt-2" style="color:${panic.detected?'var(--red)':'var(--muted)'}">${panic.detected ? 'Panic behavior detected in the final stretch of this test.' : 'No panic pattern detected.'}</div>
+    </div>
+  </div>
+  <div class="card mb-2">
+    <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Skip Pattern</div>
+    ${skipGroups.map(g => `
+      <div class="mb-2">
+        <div class="flex items-center gap-2 mb-1"><span class="tag" style="background:${g.color}22;color:${g.color}">${g.ids.length}</span><span class="text-sm">${esc(g.label)}</span></div>
+        ${g.ids.length ? `<div class="text-xs text-muted">Q${g.ids.map(qNo).join(', Q')}</div>` : ''}
+      </div>
+    `).join('')}
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Section Allocation</div>
+      <table class="table">
+        <thead><tr><th>Section</th><th>Actual</th><th>Optimal</th><th>Over/Under</th><th>Accuracy</th></tr></thead>
+        <tbody>
+          ${Object.entries(alloc).map(([name,d]) => `
+            <tr>
+              <td>${esc(name)}</td>
+              <td>${d.actual_mins}m</td>
+              <td>${d.optimal_mins != null ? d.optimal_mins+'m' : '—'}</td>
+              <td style="color:${(d.over_under_mins||0)>0?'var(--red)':(d.over_under_mins||0)<0?'var(--amber)':'var(--text)'}">${d.over_under_mins != null ? (d.over_under_mins>0?'+':'')+d.over_under_mins+'m' : '—'}</td>
+              <td>${d.accuracy != null ? d.accuracy+'%' : '—'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Question Selection Quality</div>
+      <div style="font-size:2rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--brand2)">${Math.round((selection.selection_score||0)*100)}/100</div>
+      <div class="text-sm text-muted mt-1">${esc(selection.advice||'')}</div>
+    </div>
+  </div>`;
+}
+
+// TAB 4 — RANK LEAKAGE DETAIL
+function buildReviewTab4(r) {
+  const s = r.session;
+  const leakage = s.leakage_report_json || {};
+  const breakdown = leakage.breakdown || {};
+  const qrs = r.question_results || [];
+  const twin = state.twin || {};
+  const preds = twin.predictions || {};
+  let marksPerRank = null;
+  if (preds.rank_range_low && preds.rank_range_high && preds.score_range_low != null &&
+      preds.score_range_high != null && preds.score_range_high !== preds.score_range_low) {
+    marksPerRank = (preds.rank_range_high - preds.rank_range_low) / (preds.score_range_high - preds.score_range_low);
+  }
+  const expandedKey = (t) => 'leak_'+t;
+  const entries = Object.entries(breakdown).sort((a,b) => b[1].marks - a[1].marks);
+
+  return `
+  <div class="card mb-2">
+    <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Full Leakage Breakdown</div>
+    <div class="review-stat-row"><span class="text-muted">Actual score</span><span>${leakage.actual_score}</span></div>
+    <div class="review-stat-row"><span class="text-muted">Potential score</span><span style="color:var(--brand2)">${leakage.potential_score}</span></div>
+    <div class="review-stat-row"><span class="text-muted">Marks lost to wrong answers</span><span style="color:var(--red)">${leakage.total_leaked_from_wrong}</span></div>
+    <div class="review-stat-row"><span class="text-muted">Opportunity cost from skips</span><span style="color:var(--amber)">${leakage.total_opportunity_cost_from_skipped}</span></div>
+    ${leakage.fix_this_first ? `<div class="mt-2" style="padding:.75rem;background:var(--brand-glow);border:1px solid var(--brand);border-radius:8px"><div class="text-xs font-bold" style="color:var(--brand2)">🎯 Fix This First</div><div class="text-sm">${esc(leakage.fix_this_first)}</div></div>` : ''}
+  </div>
+  <div style="display:flex;flex-direction:column;gap:.75rem">
+    ${entries.length ? entries.map(([mtype,data]) => {
+      const label = MISTAKE_TYPE_LABELS[mtype] || mtype;
+      const contributingQs = qrs.filter(q => q.classified_mistake_type === mtype && (q.is_skipped || !q.is_correct));
+      const expanded = state.reviewExpanded[expandedKey(mtype)];
+      const rankNote = marksPerRank ? ` = rank improves by ~${Math.round(data.marks*marksPerRank).toLocaleString()}` : '';
+      return `
+      <div class="card-sm" style="cursor:pointer" onclick="toggleReviewRow('${expandedKey(mtype)}')">
+        <div class="flex items-center gap-2">
+          <span class="tag" style="background:var(--surface2)">${esc(label)}</span>
+          <span class="text-sm font-bold" style="margin-left:auto">${data.marks} marks · ${data.count}Q</span>
+        </div>
+        <div class="text-xs text-muted mt-1">If you fix ${esc(label).toLowerCase()} errors: +${data.marks} marks${rankNote}</div>
+        ${expanded ? `
+          <div class="mt-2" style="display:flex;flex-direction:column;gap:.4rem">
+            ${contributingQs.map(q => `<div class="text-xs" style="padding:.4rem .6rem;background:var(--surface2);border-radius:6px">${esc((q.question_text||'').substring(0,90))}${(q.question_text||'').length>90?'…':''}</div>`).join('')}
+          </div>
+        ` : ''}
+      </div>`;
+    }).join('') : '<div class="empty-state"><div class="em">✓</div><p>No leakage recorded for this test.</p></div>'}
+  </div>`;
+}
+
+// TAB 5 — AI MENTOR (auto-fires on tab click, see setReviewTab)
+function buildReviewTab5(r) {
+  const sid = state.reviewSessionId;
+  const cache = state.reviewMentor[sid] || {};
+  const s = r.session;
+  const contextualPrompts = [
+    'Give me a 3-day plan to fix my biggest weakness from this test.',
+    'Why did I lose the most marks in this test?',
+    'Was my time management okay in this test?',
+  ];
+  return `
+  <div class="card">
+    <div class="flex items-center gap-2 mb-2">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));display:flex;align-items:center;justify-content:center;flex-shrink:0">🤖</div>
+      <div>
+        <div class="font-bold" style="font-size:.95rem">ExamAce AI Mentor — Test Debrief</div>
+        <div class="text-xs text-muted">Scored ${s.raw_score}/${s.max_score} on ${esc(r.template_name || s.template_name || 'this test')}</div>
+      </div>
+    </div>
+    ${cache.loading ? `
+      <div class="msg ai"><div class="msg-avatar">🤖</div><div class="msg-bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>
+    ` : cache.reply ? `
+      <div class="msg ai"><div class="msg-avatar">🤖</div><div class="msg-bubble">${nl2br(cache.reply)}</div></div>
+      <div class="flex gap-1 mt-2" style="flex-wrap:wrap">
+        ${contextualPrompts.map(q => `<button class="btn btn-ghost btn-sm" onclick="reviewMentorQuickReply('${q.replace(/'/g,"\\'")}')">${esc(q)}</button>`).join('')}
+      </div>
+    ` : `<div class="text-sm text-muted">Loading your debrief…</div>`}
+  </div>`;
+}
+
+// ── MOCK TESTS ────────────────────────────────────────────────────────────────
+function buildTests() {
+  const tests = state.data.tests || [];
+  const chapters = state.chapters || [];
+  return `
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title mb-2">Add Mock Test Result</div>
+      <div class="form-group"><label>Test Title</label><input id="mt-title" placeholder="JEE Adv Paper 1 Mock"/></div>
+      <div class="grid-2">
+        <div class="form-group"><label>Total Marks</label><input id="mt-total" type="number" placeholder="300"/></div>
+        <div class="form-group"><label>Your Score</label><input id="mt-score" type="number" placeholder="198"/></div>
+      </div>
+      <div class="form-group"><label>Time Taken (mins)</label><input id="mt-time" type="number" placeholder="180"/></div>
+      <div class="form-group"><label>Date</label><input id="mt-date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
+      <div class="form-group">
+        <label>Chapter-wise Score (optional)</label>
+        <div style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:.35rem" id="ch-scores">
+          ${chapters.slice(0,8).map(c=>`<div class="flex items-center gap-1" style="font-size:.8rem">
+            <span style="flex:1;min-width:0;color:var(--muted);truncate">${esc(c.name).substring(0,20)}</span>
+            <input type="number" placeholder="✓" style="width:55px;padding:.3rem .5rem;font-size:.78rem" data-ch="${c.id}" data-type="correct"/>
+            <span class="text-muted">/</span>
+            <input type="number" placeholder="N" style="width:55px;padding:.3rem .5rem;font-size:.78rem" data-ch="${c.id}" data-type="total"/>
+          </div>`).join('')}
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addTest()">Save Test ✓</button>
+    </div>
+    <div class="card">
+      <div class="section-title mb-2">Test History</div>
+      ${tests.length ? `
+        <div class="chart-wrap mb-2"><canvas id="testChart"></canvas></div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;max-height:250px;overflow-y:auto">
+          ${tests.map(t=>`<div class="card-sm flex items-center gap-2">
+            <div style="flex:1">
+              <div class="text-sm font-bold">${esc(t.title)}</div>
+              <div class="text-xs text-muted">${esc(t.date)} • ${t.time_taken_mins} mins</div>
+            </div>
+            <div style="text-align:right">
+              <div class="font-bold" style="color:${t.percentage>70?'var(--green)':t.percentage>50?'var(--amber)':'var(--red)'};font-family:'Syne',sans-serif">${t.percentage}%</div>
+              <div class="text-xs text-muted">${t.scored_marks}/${t.total_marks}</div>
+            </div>
+          </div>`).join('')}
+        </div>
+      ` : '<div class="empty-state"><div class="em">📝</div><p>Add your first test to see analytics</p></div>'}
+    </div>
+  </div>
+  <div class="card mt-2">
+    <div class="section-title mb-2">Live Test History</div>
+    ${(state.data.liveSessions||[]).length ? `
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        ${state.data.liveSessions.map(s => {
+          const pct = s.max_score ? Math.round((s.raw_score/s.max_score)*100) : 0;
+          const statusLabel = s.status === 'submitted' ? '' : ` · ${esc(s.status)}`;
+          return `<div class="card-sm flex items-center gap-2" ${s.status==='submitted'?`style="cursor:pointer" onclick="viewPastResult(${s.id})"`:''}>
+            <div style="flex:1">
+              <div class="text-sm font-bold">${esc(s.template_name)}</div>
+              <div class="text-xs text-muted">${s.submitted_at ? esc(s.submitted_at.split(' ')[0]) : esc((s.started_at||'').split(' ')[0])}${statusLabel}</div>
+            </div>
+            ${s.status==='submitted' ? `
+              <div style="text-align:right">
+                <div class="font-bold" style="color:${pct>70?'var(--green)':pct>50?'var(--amber)':'var(--red)'};font-family:'Syne',sans-serif">${pct}%</div>
+                <div class="text-xs text-muted">${s.raw_score}/${s.max_score}</div>
+              </div>
+              ${s.analysis_ready ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openReview(${s.id})">🔬 Review</button>` : ''}
+              <span class="text-muted">→</span>
+            ` : `<span class="tag" style="background:var(--surface2)">${esc(s.status)}</span>`}
+          </div>`;
+        }).join('')}
+      </div>
+    ` : '<div class="empty-state"><div class="em">🖥️</div><p>Take a test from the Library to see it here</p></div>'}
+  </div>`;
+}
+
+// ── PERFORMANCE ───────────────────────────────────────────────────────────────
+function buildPerformance() {
+  const perf = state.data.performance || [];
+  const bySubject = {};
+  perf.forEach(p => { if(!bySubject[p.subject_name]) bySubject[p.subject_name]={color:p.color,items:[]}; bySubject[p.subject_name].items.push(p); });
+
+  // Determine available subjects in a fixed sensible order: Physics first,
+  // then Chemistry, then Mathematics/Biology (whichever exists for this exam_target)
+  const subjectOrder = ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
+  const availableSubjects = subjectOrder.filter(s => bySubject[s]);
+  // Fallback: any subject names not in our known order (safety net)
+  Object.keys(bySubject).forEach(s => { if (!availableSubjects.includes(s)) availableSubjects.push(s); });
+
+  // Default to Physics if present, else first available subject
+  if (!state.heatmapSubject || !availableSubjects.includes(state.heatmapSubject)) {
+    state.heatmapSubject = availableSubjects.includes('Physics') ? 'Physics' : (availableSubjects[0] || null);
+  }
+  const activeSubject = state.heatmapSubject;
+
+  const tabBar = `
+  <div class="flex items-center gap-1 mb-2">
+    <button class="btn ${state.perfTab==='heatmap'?'btn-primary':'btn-ghost'} btn-sm" onclick="setPerfTab('heatmap')">Overview</button>
+    <button class="btn ${state.perfTab==='trends'?'btn-primary':'btn-ghost'} btn-sm" onclick="setPerfTab('trends')">📈 Trends</button>
+  </div>`;
+
+  if (state.perfTab === 'trends') {
+    return tabBar + buildPerformanceTrends();
+  }
+
+  return `
+  ${tabBar}
+  <div class="card mb-2">
+    <div class="section-title mb-2">Chapter-wise Performance</div>
+    ${Object.entries(bySubject).length ? Object.entries(bySubject).map(([sub,{color,items}])=>`
+      <div class="mb-2">
+        <div style="font-size:.8rem;font-weight:700;color:${color};margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.05em">${esc(sub)}</div>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          ${items.map(i=>{const pct=Math.round(i.accuracy*100); return `
+            <div class="flex items-center gap-2">
+              <div style="width:140px;font-size:.8rem;color:var(--muted);truncate" title="${esc(i.chapter_name)}">${esc(i.chapter_name).substring(0,18)}</div>
+              <div class="progress-bar" style="flex:1">
+                <div class="progress-fill" style="width:${pct}%;background:${pct<40?'var(--red)':pct<65?'var(--amber)':'var(--green)'}"></div>
+              </div>
+              <div style="width:40px;text-align:right;font-size:.8rem;font-weight:700;color:${pct<40?'var(--red)':pct<65?'var(--amber)':'var(--green)'}">${pct}%</div>
+              <div class="text-xs text-muted" style="width:60px">${i.total_attempted}Q</div>
+            </div>`}).join('')}
+        </div>
+      </div>
+    `).join('') : '<div class="empty-state"><div class="em">📈</div><p>Add test results to see performance by chapter</p></div>'}
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
+      <div class="section-title" style="margin:0">Performance Heatmap</div>
+      ${availableSubjects.length > 1 ? `
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          ${availableSubjects.map(sub => `
+            <button class="btn ${activeSubject===sub?'btn-primary':'btn-ghost'} btn-sm"
+                    onclick="setHeatmapSubject('${esc(sub)}')">${esc(sub)}</button>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+    ${activeSubject && bySubject[activeSubject]?.items?.length ? `
+      <div class="chart-wrap-tall"><canvas id="perfChart"></canvas></div>
+    ` : `<div class="empty-state"><div class="em">📊</div><p>No test data yet for ${esc(activeSubject||'this subject')}</p></div>`}
+  </div>`;
+}
+
+window.setHeatmapSubject = function(sub) {
+  state.heatmapSubject = sub;
+  render();
+};
+
+// ── PHASE 9B: TRENDS ─────────────────────────────────────────────────────────
+window.setPerfTab = function(tab) {
+  state.perfTab = tab;
+  render();
+};
+
+function buildPerformanceTrends() {
+  const t = state.data.trends;
+  if (!t) return `<div class="empty-state"><div class="em">📈</div><p>Loading trends…</p></div>`;
+  if (!t.sufficient_data) {
+    return `<div class="empty-state"><div class="em">📈</div><p>Complete at least 2 analyzed tests to see trends (you have ${t.sessions_analyzed}).</p>
+      <button class="btn btn-primary mt-2" onclick="navigate('library')">Browse Test Library →</button></div>`;
+  }
+
+  const chapterRows = t.chapter_mastery_evolution || [];
+  const trendArrow = (trend) => trend==='improving' ? {sym:'↑',color:'var(--green)'} : trend==='declining' ? {sym:'↓',color:'var(--red)'} : {sym:'→',color:'var(--muted)'};
+  const panicFreq = t.panic_frequency || {};
+  const behavioral = t.behavioral_improvements || [];
+  const avgSecondGuess = behavioral.length ? (behavioral.reduce((a,b)=>a+(b.avg_answer_changes_per_question||0),0) / behavioral.length).toFixed(2) : '0.00';
+
+  return `
+  <div class="grid-2 mb-2">
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Score Trend</div>
+      <div class="chart-wrap"><canvas id="trendScoreChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Leakage Trend <span class="text-muted" style="font-weight:400;text-transform:none">(declining = improving)</span></div>
+      <div class="chart-wrap"><canvas id="trendLeakageChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card mb-2">
+    <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Mistake Evolution <span class="text-muted" style="font-weight:400;text-transform:none">(conceptual % declining = improving)</span></div>
+    <div class="chart-wrap-tall"><canvas id="trendMistakeChart"></canvas></div>
+  </div>
+  <div class="card mb-2">
+    <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Chapter Mastery Evolution</div>
+    <table class="table">
+      <thead><tr><th>Chapter</th><th>Tests</th><th>Latest Accuracy</th><th>Trend</th></tr></thead>
+      <tbody>
+        ${chapterRows.map(c => {
+          const points = c.points.filter(p => p.accuracy !== null);
+          const latest = points.length ? points[points.length-1].accuracy : null;
+          const arrow = trendArrow(c.trend);
+          return `<tr>
+            <td>${esc(c.chapter_name)}</td>
+            <td>${c.points.length}</td>
+            <td>${latest !== null ? latest+'%' : '—'}</td>
+            <td style="color:${arrow.color};font-weight:700">${arrow.sym} ${esc(c.trend)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:.05em">Behavioral Improvements</div>
+    <div class="grid-2">
+      <div class="review-stat-row"><span class="text-muted">Panic frequency</span><span>${panicFreq.tests_with_panic||0} / ${panicFreq.total_tests||0} tests (${Math.round((panicFreq.rate||0)*100)}%)</span></div>
+      <div class="review-stat-row"><span class="text-muted">Avg answer changes / question</span><span>${avgSecondGuess}</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.4rem;margin-top:.75rem">
+      ${behavioral.map(b => `
+        <div class="flex items-center gap-2" style="font-size:.8rem">
+          <span style="width:70px;color:var(--muted)">${esc(b.date)}</span>
+          <span class="tag" style="background:${b.panic_detected?'#f8717122':'#22d3a022'};color:${b.panic_detected?'var(--red)':'var(--green)'}">${b.panic_detected?'Panic':'Calm'}</span>
+          <span class="text-muted">${b.avg_answer_changes_per_question} changes/Q</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+// ── MISTAKES ──────────────────────────────────────────────────────────────────
+function buildMistakes() {
+  const data = state.data.mistakes || {by_type:{}, total:0};
+  const chapters = state.chapters;
+
+  // Unified human-readable labels for both legacy manual types and Phase 3 classifier types
+  const TYPE_LABELS = {
+    conceptual: 'Conceptual gap', silly: 'Silly / careless', formula: 'Formula error',
+    calculation: 'Calculation error', time: 'Time pressure',
+    guessing: 'Guessed (no solid attempt)', avoidance: 'Skipped — avoidable',
+    time_pressure: 'Rushed under time pressure', careless: 'Careless slip',
+    formula_recall: 'Couldn\'t recall the formula', misread: 'Misread the question',
+  };
+
+  return `
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title mb-2">Log a Mistake Manually</div>
+      <div class="form-group"><label>Chapter</label>
+        <select id="mk-chapter">${chapters.map(c=>`<option value="${c.id}">${esc(c.subject_name)} — ${esc(c.name)}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Question / Topic</label><input id="mk-question" placeholder="What was the question about?"/></div>
+      <div class="form-group"><label>Your Answer</label><input id="mk-student" placeholder="What did you answer?"/></div>
+      <div class="form-group"><label>Correct Answer</label><input id="mk-correct" placeholder="What was correct?"/></div>
+      <div class="form-group"><label>Error Type</label>
+        <select id="mk-type">
+          <option value="conceptual">Conceptual Gap</option>
+          <option value="silly">Silly Mistake</option>
+          <option value="formula">Formula Error</option>
+          <option value="calculation">Calculation Error</option>
+          <option value="time">Time Pressure</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="addMistake()">Log Mistake</button>
+    </div>
+    <div class="card">
+      <div class="section-title mb-2">Mistake Analysis (${data.total} total)</div>
+      <div class="text-xs text-muted mb-2">Includes mistakes auto-detected from your live tests</div>
+      ${Object.entries(data.by_type||{}).length ? Object.entries(data.by_type).map(([type,items])=>`
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-1">
+            <span class="tag badge-red">${esc(TYPE_LABELS[type]||type)} (${items.length})</span>
+          </div>
+          ${items.slice(0,3).map(m=>`<div class="card-sm mt-1 flex items-center gap-2">
+            <div style="flex:1">
+              <div class="text-sm">${esc(m.question_text).substring(0,60)}${(m.question_text||'').length>60?'...':''}</div>
+              <div class="text-xs text-muted">${esc(m.chapter_name)} · ${esc((m.date||'').split(' ')[0])}${m.mistake_confidence?` · ${Math.round(m.mistake_confidence*100)}% confidence`:''}</div>
+            </div>
+            ${m.session_id
+              ? `<button class="btn btn-ghost btn-sm" onclick="viewPastResult(${m.session_id})">View test →</button>`
+              : (!m.resolved ? `<button class="btn btn-green btn-sm" onclick="resolveMistake(${m.id})">✓</button>` : '<span class="tag badge-green">Done</span>')}
+          </div>`).join('')}
+          ${items.length > 3 ? `<div class="text-xs text-muted mt-1">+${items.length-3} more in this category</div>` : ''}
+        </div>
+      `).join('') : '<div class="empty-state"><div class="em">🎯</div><p>No mistakes yet — take a test from the Library to see your patterns here automatically.</p></div>'}
+    </div>
+  </div>`;
+}
+
+// ── STUDY PLANNER ─────────────────────────────────────────────────────────────
+function buildPlanner() {
+  const plans = state.data.plans || [];
+  const revDue = state.data.revisionDue || [];
+  const chapters = state.chapters;
+  const today = new Date();
+  const days = [];
+  for(let i=0;i<28;i++){const d=new Date(today);d.setDate(d.getDate()+i);days.push(d);}
+  const planMap = {};
+  plans.forEach(p=>{if(!planMap[p.scheduled_date])planMap[p.scheduled_date]=[];planMap[p.scheduled_date].push(p);});
+
+  // Build revision risk color/label helpers
+  const riskColor = {critical:'var(--red)',high:'var(--amber)',medium:'var(--brand)',low:'var(--green)'};
+  const riskLabel = {critical:'🔴 Critical',high:'🟠 High',medium:'🟡 Medium',low:'🟢 Low'};
+
+  // Revision cards
+  const revCards = revDue.length ? revDue.map(item => `
+    <div class="card-sm" id="rev-card-${item.id}" style="border-left:3px solid ${riskColor[item.forgetting_risk]||'var(--amber)'};margin-bottom:.5rem">
+      <div style="display:flex;align-items:flex-start;gap:.75rem">
+        <div style="flex:1;min-width:0">
+          <div class="text-sm font-bold" style="margin-bottom:.15rem">${esc(item.chapter_name)}</div>
+          <div class="text-xs text-muted" style="margin-bottom:.35rem">${esc((item.description||'').slice(0,80))}${item.description&&item.description.length>80?'…':''}</div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
+            <span class="tag" style="background:${riskColor[item.forgetting_risk]||'var(--amber)'}22;color:${riskColor[item.forgetting_risk]||'var(--amber)'};border:1px solid ${riskColor[item.forgetting_risk]||'var(--amber)'}44;font-size:.65rem">${riskLabel[item.forgetting_risk]||item.forgetting_risk}</span>
+            <span class="tag badge-muted text-xs">Every ${item.interval_days}d</span>
+            <span class="tag badge-muted text-xs">Rep #${item.repetition_count+1}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;align-items:flex-end">
+          <button class="btn btn-green btn-sm" onclick="reviewRevision(${item.id},'got_it')" title="I knew it!">✅ Got It</button>
+          <button class="btn btn-sm" style="background:var(--amber);color:#000" onclick="reviewRevision(${item.id},'with_hint')" title="Needed a hint">💡 With Hint</button>
+          <button class="btn btn-sm" style="background:var(--red)" onclick="reviewRevision(${item.id},'forgot')" title="Completely forgot">❌ Forgot</button>
+        </div>
+      </div>
+    </div>
+  `).join('') : `<div class="empty-state" style="padding:1rem 0"><div class="em">🎉</div><p class="text-sm">Nothing due for revision today. Great job staying on top!</p></div>`;
+
+  // Phase 8: Adaptive Study Planner — "Generate Today's Plan" section
+  const genPlan = state.data.generatedPlan;
+  const genHours = genPlan ? genPlan.available_hours : 6;
+  const genExamDate = (state.student && state.student.exam_date) ? String(state.student.exam_date).slice(0,10) : '';
+  const genTypeColor = {revision:'var(--amber)', study:'var(--brand)'};
+  const genTypeLabel = {revision:'📚 Revision', study:'📖 Study'};
+
+  const genPlanCards = !genPlan ? '' : (!genPlan.items || !genPlan.items.length ? `
+    <div class="empty-state" style="padding:1rem 0"><div class="em">🤔</div><p class="text-sm">No plan items generated. Take a test or add chapter attempts so the twin has data to prioritize.</p></div>
+  ` : `
+    <div style="margin-top:1rem">
+      <div class="text-xs text-muted mb-2">
+        ${genPlan.revision_time_allocated}m revision (non-negotiable) + ${genPlan.study_time_allocated}m study = ${genPlan.total_time_allocated}m total
+        ${genPlan.days_to_exam!=null ? ` • ${genPlan.days_to_exam} days to exam` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        ${genPlan.items.map(item => `
+          <div class="card-sm" style="border-left:3px solid ${genTypeColor[item.type]||'var(--brand)'}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
+              <div style="flex:1;min-width:0">
+                <div class="text-sm font-bold">${esc(item.chapter_name)}</div>
+                <div class="text-xs text-muted mt-1">${esc(item.priority_reason)}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;flex-shrink:0">
+                <span class="tag" style="background:${genTypeColor[item.type]}22;color:${genTypeColor[item.type]};border:1px solid ${genTypeColor[item.type]}44;font-size:.65rem">${genTypeLabel[item.type]||item.type}</span>
+                <span class="tag badge-muted text-xs">${item.duration_mins}m</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `);
+
+  return `
+  <!-- REVISION DUE TODAY (Phase 7) -->
+  <div class="card mb-2">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <div class="section-title" style="margin:0">📚 Due for Revision Today</div>
+      <span class="tag ${revDue.length>0?'badge-red':'badge-green'}" style="font-size:.75rem">${revDue.length} item${revDue.length!==1?'s':''}</span>
+    </div>
+    <div id="revision-list">${revCards}</div>
+  </div>
+
+  <!-- GENERATE TODAY'S PLAN (Phase 8) -->
+  <div class="card mb-2">
+    <div class="section-title mb-2">🧠 Generate Today's Plan</div>
+    <div class="grid-2" style="gap:.75rem">
+      <div class="form-group"><label>Available Hours Today</label>
+        <input id="gp-hours" type="number" min="1" max="12" step="0.5" value="${genHours}"/>
+      </div>
+      <div class="form-group"><label>Exam Date</label>
+        <input id="gp-examdate" type="date" value="${genExamDate}"/>
+      </div>
+    </div>
+    <button id="gp-generate-btn" class="btn btn-primary" onclick="generatePlan()">Generate →</button>
+    ${genPlanCards}
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card mb-2">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleManualPlanForm()">
+          <div class="section-title" style="margin:0">Schedule Study Session (Manual)</div>
+          <span class="text-xs text-muted">${state.showManualPlanForm ? '▲ Hide' : '▼ Add manually +'}</span>
+        </div>
+        ${state.showManualPlanForm ? `
+        <div class="form-group mt-2"><label>Chapter</label>
+          <select id="pl-chapter">${chapters.map(c=>`<option value="${c.id}">${esc(c.subject_name)} — ${esc(c.name)}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label>Date</label><input id="pl-date" type="date" value="${today.toISOString().split('T')[0]}"/></div>
+        <div class="form-group"><label>Duration (mins)</label><input id="pl-duration" type="number" value="60"/></div>
+        <div class="form-group"><label>Type</label>
+          <select id="pl-type"><option value="study">Study</option><option value="revision">Revision</option><option value="test">Test</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="addPlan()">Add to Planner</button>
+        ` : ''}
+      </div>
+      <div class="card">
+        <div class="section-title mb-2">4-Week Calendar</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.35rem;margin-bottom:.5rem">
+          ${['M','T','W','T','F','S','S'].map(d=>`<div style="text-align:center;font-size:.7rem;color:var(--muted);font-weight:700">${d}</div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.35rem">
+          ${days.map(d=>{
+            const ds=d.toISOString().split('T')[0];
+            const isToday=ds===today.toISOString().split('T')[0];
+            const hasP=planMap[ds];
+            return `<div class="cal-day ${isToday?'today':''} ${hasP?'has-plan':''}" title="${ds}">
+              <span>${d.getDate()}</span>
+              ${hasP?`<div class="cal-dot"></div>`:''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title mb-2">Upcoming Sessions</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;max-height:600px;overflow-y:auto">
+        ${plans.length ? plans.filter(p=>p.scheduled_date>=today.toISOString().split('T')[0]).slice(0,15).map(p=>`
+          <div class="card-sm flex items-center gap-2" style="border-left:3px solid ${p.plan_type==='revision'?'var(--amber)':p.plan_type==='test'?'var(--red)':'var(--brand)'}">
+            <div style="flex:1">
+              <div class="text-sm font-bold">${esc(p.chapter_name)}</div>
+              <div class="text-xs text-muted">${esc(p.subject_name)} • ${esc(p.scheduled_date)}</div>
+              <div class="flex gap-1 mt-1">
+                <span class="tag ${p.plan_type==='revision'?'badge-amber':p.plan_type==='test'?'badge-red':'badge-brand'}">${esc(p.plan_type)}</span>
+                <span class="tag badge-brand">${p.duration_mins}m</span>
+              </div>
+            </div>
+            ${p.completed?'<span class="tag badge-green">✓ Done</span>':`<button class="btn btn-green btn-sm" onclick="completePlan(${p.id})">Mark Done</button>`}
+          </div>
+        `).join('') : '<div class="empty-state"><div class="em">🗓️</div><p>No sessions planned yet</p></div>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── AI MENTOR CHAT ────────────────────────────────────────────────────────────
+// Phase 5: Build context-aware banner text from twin data
+function getMentorContextBanner() {
+  const twin = state.twin;
+  const level = (twin && twin.unlock_level) || 1;
+  const n = (twin && twin.tests_analyzed) || 0;
+  if (!twin || n === 0) {
+    return { emoji: '🔒', text: 'Take your first live test to unlock behavioral coaching', cls: 'badge-amber' };
+  }
+  if (level === 1) {
+    const need = 3 - n;
+    return { emoji: '🔒', text: `${need > 0 ? need : 0} more test${need !== 1 ? 's' : ''} to unlock behavioral coaching`, cls: 'badge-amber' };
+  }
+  if (level === 2) {
+    const bp = twin.behavioral_patterns || {};
+    const md = twin.mistake_distribution || {};
+    const topMistake = Object.entries(md).sort((a,b)=>b[1]-a[1])[0];
+    const flags = Object.values(bp).filter(v => v && v !== 0 && v !== '').length;
+    return { emoji: '🧠', text: `Mentor knows: ${topMistake ? topMistake[0] + ' errors dominant' : 'your test patterns'} • ${flags} behavioral signals active`, cls: 'badge-blue' };
+  }
+  if (level === 3) {
+    const sc = twin.scores || {};
+    const er = sc.exam_readiness;
+    const n_patterns = Object.keys(twin.topic_mastery || {}).length;
+    return { emoji: '🎯', text: `Full profile loaded: ${er != null ? 'readiness ' + er + '%' : 'cognitive profile active'} • ${n_patterns} chapters tracked`, cls: 'badge-green' };
+  }
+  // Level 4: full predictions
+  const pred = twin.predictions || {};
+  const on_track = pred.on_track;
+  const rl = pred.rank_range_low;
+  const rh = pred.rank_range_high;
+  const rankText = (rl && rh) ? `Predicted rank ${rl.toLocaleString()}–${rh.toLocaleString()}` : 'Rank prediction active';
+  const trackText = on_track === true ? '✓ On track' : on_track === false ? '✗ Behind target' : '';
+  if (level >= 4) {
+    return { emoji: '⚡', text: `${rankText}${trackText ? ' | ' + trackText : ''}`, cls: on_track === false ? 'badge-red' : 'badge-green' };
+  }
+}
+
+// Phase 5: Generate contextual suggested prompts based on twin state
+function getMentorSuggestedPrompts() {
+  const twin = state.twin;
+  const level = (twin && twin.unlock_level) || 1;
+  const n = (twin && twin.tests_analyzed) || 0;
+
+  if (!twin || n === 0) {
+    return [
+      "What should I focus on first?",
+      `Explain a key ${esc(state.student?.exam_target || 'JEE')} concept`,
+      "How do I manage my time in exams?"
+    ];
+  }
+
+  const bp = twin.behavioral_patterns || {};
+  const rls = twin.rank_leakage_summary || {};
+  const sc = twin.scores || {};
+  const pred = twin.predictions || {};
+  const prompts = [];
+
+  // Panic behavior
+  if ((bp.panic_fraction || 0) > 0.4) {
+    prompts.push("Why do I keep losing marks near the end of the test?");
+  }
+  // Top leakage source
+  const topLeakage = rls.top_leakage_source || '';
+  if (topLeakage === 'conceptual') {
+    prompts.push("What concept am I missing most?");
+  } else if (topLeakage === 'calculation') {
+    prompts.push("How do I fix my calculation errors?");
+  }
+  // Underconfidence
+  if ((bp.underconfidence_rate || 0) > 0.3) {
+    prompts.push("Am I better than my scores show?");
+  }
+  // Off track
+  if (pred.on_track === false) {
+    prompts.push("How far behind am I and what do I do?");
+  }
+  // Second-guessing
+  if ((bp.second_guess_penalty_avg_marks || 0) > 2) {
+    prompts.push("Why do I keep changing correct answers to wrong ones?");
+  }
+
+  // Fill remaining with smart defaults
+  const defaults = [
+    "Why isn't my score improving?",
+    "What's my biggest weakness right now?",
+    "What should I study tomorrow?",
+    "How do I improve my time management?"
+  ];
+  for (const d of defaults) {
+    if (prompts.length >= 3) break;
+    if (!prompts.includes(d)) prompts.push(d);
+  }
+  return prompts.slice(0, 3);
+}
+
+function buildChat() {
+  const msgs = state.chatMessages;
+  const banner = getMentorContextBanner();
+  const suggestedPrompts = getMentorSuggestedPrompts();
+  const twin = state.twin;
+  const n = (twin && twin.tests_analyzed) || 0;
+
+  return `
+  <div class="chat-container">
+    <div style="margin-bottom:.75rem">
+      <div class="card-sm" style="padding:.75rem 1rem">
+        <div class="flex items-center gap-2" style="margin-bottom:.5rem">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">🤖</div>
+          <div style="flex:1;min-width:0">
+            <div class="font-bold" style="font-size:.95rem">ExamAce AI Mentor</div>
+            <div class="text-xs text-muted">Powered by Claude • Behavioral coach, not a generic tutor</div>
+          </div>
+          <span class="tag badge-green" style="flex-shrink:0">● Online</span>
+        </div>
+        <div class="flex items-center gap-2" style="background:var(--surface2);border-radius:8px;padding:.5rem .75rem;font-size:.82rem">
+          <span style="font-size:1rem">${banner.emoji}</span>
+          <span class="tag ${banner.cls}" style="font-size:.75rem;padding:2px 8px;flex-shrink:0">${n > 0 ? 'Level ' + ((twin && twin.unlock_level) || 1) + '/4' : 'Level 1/4'}</span>
+          <span style="color:var(--text-secondary)">${banner.text}</span>
+        </div>
+      </div>
+    </div>
+    <div class="chat-messages" id="chat-msgs">
+      ${msgs.length===0 ? `<div class="msg ai">
+        <div class="msg-avatar">🤖</div>
+        <div>
+          <div class="msg-bubble">
+            Hi ${esc(state.student?.name?.split(' ')[0] || 'there')}! 👋 I'm your ExamAce AI Mentor.
+            ${n > 0
+              ? `I've analyzed your <strong>${n} test${n !== 1 ? 's' : ''}</strong> and know your behavioral patterns. I speak from your actual data — not generic advice.`
+              : `I'm ready to coach you for ${esc(state.student?.exam_target || 'JEE')}. Take your first live test to unlock personalized behavioral coaching.`
+            }
+          </div>
+          <div class="text-xs text-muted mt-1" style="margin-left:.5rem">Suggested questions based on your profile:</div>
+          <div class="flex gap-1 mt-1" style="flex-wrap:wrap">
+            ${suggestedPrompts.map(q=>`<button class="btn btn-ghost btn-sm" style="font-size:.78rem" onclick="sendQuick('${q.replace(/'/g, "\\'")}')">${q}</button>`).join('')}
+          </div>
+        </div>
+      </div>` : msgs.map(m=>`
+        <div class="msg ${m.role==='user'?'user':'ai'}">
+          <div class="msg-avatar">${m.role==='user'?esc(state.student.name?.[0] || '?'):'🤖'}</div>
+          <div class="msg-bubble">${nl2br(m.content)}</div>
+        </div>
+      `).join('')}
+      ${state.chatLoading?`<div class="msg ai"><div class="msg-avatar">🤖</div><div class="msg-bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>`:''}
+    </div>
+    ${msgs.length > 0 && !state.chatLoading ? `
+    <div style="padding:.4rem 0;border-top:1px solid var(--border);margin-bottom:.4rem">
+      <div class="text-xs text-muted" style="margin-bottom:.3rem">Quick follow-up:</div>
+      <div class="flex gap-1" style="flex-wrap:wrap">
+        ${suggestedPrompts.map(q=>`<button class="btn btn-ghost btn-sm" style="font-size:.75rem" onclick="sendQuick('${q.replace(/'/g, "\\'")}')">${q}</button>`).join('')}
+      </div>
+    </div>` : ''}
+    <div class="chat-input-row">
+      <input id="chat-input" placeholder="Ask anything about your ${esc(state.student?.exam_target || 'JEE')} prep..." onkeydown="if(event.key==='Enter')sendChat()"/>
+      <button class="btn btn-primary" onclick="sendChat()" ${state.chatLoading?'disabled':''}>
+        ${state.chatLoading?'<div class="spinner"></div>':'Send →'}
+      </button>
+    </div>
+  </div>`;
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+window.navigate = async function(page) { state.page=page; await loadPageData(); render(); };
+window.logout = function() {
+  localStorage.removeItem('examace_student');
+  state.student=null;
+  state.data={};
+  state.chapters=[];
+  state.subjects=[];
+  state.chatMessages=[];
+  render();
+};
+
+window.logSession = async function() {
+  const chId=document.getElementById('st-chapter').value;
+  if(!chId) return alert('Chapters are still loading. Please try again.');
+  const dur=parseInt(document.getElementById('st-duration').value)||60;
+  const date=document.getElementById('st-date').value;
+  const notes=document.getElementById('st-notes').value;
+  await post('/api/study-sessions',{student_id:state.student.id,chapter_id:parseInt(chId),duration_mins:dur,date,notes});
+  await loadPageData(); render();
+};
+
+window.addTest = async function() {
+  const title=document.getElementById('mt-title').value; if(!title)return alert('Enter test title');
+  const total=parseInt(document.getElementById('mt-total').value)||300;
+  const score=parseFloat(document.getElementById('mt-score').value)||0;
+  const time=parseInt(document.getElementById('mt-time').value)||180;
+  const date=document.getElementById('mt-date').value;
+  const chScores={};
+  document.querySelectorAll('#ch-scores input[data-type="correct"]').forEach(el=>{
+    const chId=el.dataset.ch; const correct=parseInt(el.value)||0;
+    const totalEl=document.querySelector(`#ch-scores input[data-ch="${chId}"][data-type="total"]`);
+    const tot=parseInt(totalEl?.value)||0;
+    if(tot>0) chScores[chId]={correct,total:tot};
+  });
+  await post('/api/mock-tests',{student_id:state.student.id,exam_target:state.student.exam_target,title,total_marks:total,scored_marks:score,time_taken_mins:time,date,chapter_scores:chScores});
+  await loadPageData(); render();
+};
+
+window.addMistake = async function() {
+  const chId=document.getElementById('mk-chapter').value;
+  if(!chId) return alert('Chapters are still loading. Please try again.');
+  const question=document.getElementById('mk-question').value; if(!question)return alert('Describe the question');
+  const student=document.getElementById('mk-student').value;
+  const correct=document.getElementById('mk-correct').value;
+  const type=document.getElementById('mk-type').value;
+  await post('/api/mistakes',{student_id:state.student.id,chapter_id:parseInt(chId),question_text:question,student_answer:student,correct_answer:correct,error_type:type});
+  await loadPageData(); render();
+};
+
+window.resolveMistake = async function(id) {
+  await fetch(`${API}/api/mistakes/${id}/resolve`,{method:'PATCH'});
+  await loadPageData(); render();
+};
+
+window.addPlan = async function() {
+  const chId=document.getElementById('pl-chapter').value;
+  if(!chId) return alert('Chapters are still loading. Please try again.');
+  const date=document.getElementById('pl-date').value; if(!date)return;
+  const dur=parseInt(document.getElementById('pl-duration').value)||60;
+  const type=document.getElementById('pl-type').value;
+  await post('/api/plan',{student_id:state.student.id,chapter_id:parseInt(chId),date,duration_mins:dur,plan_type:type});
+  await loadPageData(); render();
+};
+
+window.completePlan = async function(id) {
+  await fetch(`${API}/api/plan/${id}/complete?student_id=${state.student.id}`,{method:'PATCH'});
+  await loadPageData(); render();
+};
+
+// Phase 8 -- Adaptive Study Planner
+window.generatePlan = async function() {
+  const hoursEl = document.getElementById('gp-hours');
+  const dateEl = document.getElementById('gp-examdate');
+  const hours = parseFloat(hoursEl && hoursEl.value) || 6;
+  const examDate = (dateEl && dateEl.value) ? dateEl.value : null;
+
+  const btn = document.getElementById('gp-generate-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+
+  const result = await post('/api/plan/generate', {
+    student_id: state.student.id,
+    available_hours: hours,
+    exam_date: examDate,
+  });
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Generate →'; }
+  if (!result) return;
+
+  state.data.generatedPlan = result;
+  await loadPageData();
+  render();
+};
+
+window.toggleManualPlanForm = function() {
+  state.showManualPlanForm = !state.showManualPlanForm;
+  render();
+};
+
+// Phase 7 -- SM-2 Spaced Repetition Review (improved visual flash)
+window.reviewRevision = async function(itemId, quality) {
+  const sid = state.student.id;
+  const card = document.getElementById(`rev-card-${itemId}`);
+  if (!card) return;
+
+  // Disable buttons immediately to prevent double-tap
+  card.querySelectorAll('button').forEach(b => b.disabled = true);
+
+  try {
+    const res = await fetch(`${API}/api/revision/${itemId}/review?student_id=${sid}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({quality})
+    });
+    const result = await res.json();
+
+    // -- Visual flash feedback --------------------------------------------------
+    const riskColor = {critical:'var(--red)',high:'var(--amber)',medium:'var(--brand)',low:'var(--green)'};
+    const riskLabel = {critical:'Critical',high:'High',medium:'Medium',low:'Low'};
+
+    const interval = result.new_interval_days || 1;
+    const ef = (result.new_ease_factor || 2.5).toFixed(2);
+    const rep = result.new_repetition_count || 0;
+    const newRisk = result.forgetting_risk || 'high';
+
+    const qualityConfig = {
+      got_it: {
+        emoji: '✅',
+        color: 'var(--green)',
+        headline: `Perfect recall!`,
+        sub: interval === 1 ? `See you tomorrow` : `Next review in ${interval} days`,
+        motivation: rep >= 3 ? `🔥 ${rep} reps in -- this is getting locked in` : `Keep going -- spaced repetition works`,
+        holdMs: 4000,
+      },
+      with_hint: {
+        emoji: '💡',
+        color: 'var(--amber)',
+        headline: `Got it with a hint`,
+        sub: `Next review in ${interval} day${interval !== 1 ? 's' : ''} -- keep practising`,
+        motivation: `Ease factor: ${ef} -- a little more exposure needed`,
+        holdMs: 4000,
+      },
+      forgot: {
+        emoji: '❌',
+        color: 'var(--red)',
+        headline: `Forgot -- that's okay`,
+        sub: `Resetting to tomorrow (interval = 1)`,
+        motivation: `This one needs more reps. SM-2 will drill it harder now`,
+        holdMs: 4000,
+      },
+    };
+    const cfg = qualityConfig[quality] || qualityConfig.got_it;
+
+    const efPct = Math.min(100, Math.round(((parseFloat(ef) - 1.3) / (3.5 - 1.3)) * 100));
+    const riskBg = `${riskColor[newRisk]}22`;
+    const riskBorder = `${riskColor[newRisk]}55`;
+
+    card.innerHTML = `
+      <div style="animation:fadeInSlide .18s ease;padding:.1rem 0">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem">
+          <span style="font-size:1.5rem;line-height:1">${cfg.emoji}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:.88rem;color:${cfg.color};line-height:1.2">${cfg.headline}</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:.1rem">${cfg.sub}</div>
+          </div>
+          <span class="tag" style="background:${riskBg};color:${riskColor[newRisk]};border:1px solid ${riskBorder};font-size:.62rem;white-space:nowrap">
+            ${riskLabel[newRisk]} risk
+          </span>
+        </div>
+        <div style="display:flex;gap:.35rem;align-items:center;margin-bottom:.45rem">
+          <span class="tag badge-muted" style="font-size:.62rem">Rep #${rep}</span>
+          <span class="tag badge-muted" style="font-size:.62rem">EF ${ef}</span>
+          <span class="tag badge-muted" style="font-size:.62rem">+${interval}d</span>
+        </div>
+        <div style="height:4px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-bottom:.4rem">
+          <div style="height:100%;width:${efPct}%;background:${cfg.color};border-radius:99px;transition:width .6s ease"></div>
+        </div>
+        <div style="font-size:.7rem;color:var(--muted);font-style:italic">${cfg.motivation}</div>
+      </div>`;
+
+    card.style.borderLeftColor = riskColor[newRisk] || 'var(--amber)';
+    card.style.transition = 'opacity .35s ease, max-height .35s ease, margin-bottom .35s ease, padding .35s ease';
+
+    // Dynamic hold -- longer for 'forgot' so student can process it
+    await new Promise(r => setTimeout(r, cfg.holdMs));
+
+    card.style.opacity = '0';
+    card.style.maxHeight = '0';
+    card.style.overflow = 'hidden';
+    card.style.marginBottom = '0';
+    card.style.paddingTop = '0';
+    card.style.paddingBottom = '0';
+
+    await new Promise(r => setTimeout(r, 380));
+
+    const r2 = await fetch(`${API}/api/revision/${sid}`);
+    const due = r2.ok ? await r2.json() : [];
+    state.data.revisionDue = due;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const overdueCount = due.filter(item => item.due_date < todayStr).length;
+    updateRevisionBadge(overdueCount);
+
+    const revList = document.getElementById('revision-list');
+    if (revList) {
+      const riskLabelFull = {critical:'🔴 Critical',high:'🟠 High',medium:'🟡 Medium',low:'🟢 Low'};
+      if (due.length === 0) {
+        revList.innerHTML = `<div class="empty-state" style="padding:1.25rem 0">
+          <div class="em">🎉</div>
+          <p class="text-sm font-bold" style="color:var(--green)">All done for today!</p>
+          <p class="text-xs text-muted">Spaced repetition is working. Check back tomorrow.</p>
+        </div>`;
+      } else {
+        revList.innerHTML = due.map(item => `
+          <div class="card-sm" id="rev-card-${item.id}"
+               style="border-left:3px solid ${riskColor[item.forgetting_risk]||'var(--amber)'};margin-bottom:.5rem">
+            <div style="display:flex;align-items:flex-start;gap:.75rem">
+              <div style="flex:1;min-width:0">
+                <div class="text-sm font-bold" style="margin-bottom:.15rem">${esc(item.chapter_name)}</div>
+                <div class="text-xs text-muted" style="margin-bottom:.35rem">${esc((item.description||'').slice(0,80))}${item.description&&item.description.length>80?'…':''}</div>
+                <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
+                  <span class="tag" style="background:${riskColor[item.forgetting_risk]||'var(--amber)'}22;
+                    color:${riskColor[item.forgetting_risk]||'var(--amber)'};
+                    border:1px solid ${riskColor[item.forgetting_risk]||'var(--amber)'}44;font-size:.65rem">
+                    ${riskLabelFull[item.forgetting_risk]||item.forgetting_risk}
+                  </span>
+                  <span class="tag badge-muted text-xs">Every ${item.interval_days}d</span>
+                  <span class="tag badge-muted text-xs">Rep #${item.repetition_count+1}</span>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:.3rem;align-items:flex-end">
+                <button class="btn btn-green btn-sm" onclick="reviewRevision(${item.id},'got_it')">✅ Got It</button>
+                <button class="btn btn-sm" style="background:var(--amber);color:#000"
+                        onclick="reviewRevision(${item.id},'with_hint')">💡 With Hint</button>
+                <button class="btn btn-sm" style="background:var(--red)"
+                        onclick="reviewRevision(${item.id},'forgot')">❌ Forgot</button>
+              </div>
+            </div>
+          </div>`).join('');
+      }
+      const headerTag = revList.closest('.card')?.querySelector('[class*="badge-"]');
+      if (headerTag && headerTag.textContent.includes('item')) {
+        headerTag.textContent = `${due.length} item${due.length!==1?'s':''}`;
+        headerTag.className = `tag ${due.length>0?'badge-red':'badge-green'}`;
+      }
+    }
+  } catch(e) {
+    if (card) { card.style.opacity='1'; card.querySelectorAll('button').forEach(b=>b.disabled=false); }
+    console.error('Review failed:', e);
+  }
+};
+
+function updateRevisionBadge(count) {
+  const badge = document.getElementById('nav-revision-badge');
+  if (badge) {
+    badge.textContent = count > 0 ? count : '';
+    badge.style.display = count > 0 ? 'inline-flex' : 'none';
+  }
+}
+
+// Load revision count for badge on startup / page switch
+// Uses raw fetch (not api()) so a missing table or server error never shows an alert
+async function loadRevisionCount() {
+  if (!state.student) return;
+  try {
+    const r = await fetch(`${API}/api/revision/${state.student.id}`);
+    const due = r.ok ? await r.json() : [];
+    state.data.revisionDue = due || [];
+    // Badge shows OVERDUE count: items where due_date < today (strictly past)
+    // Items due exactly today are shown in the planner but don't red-badge the nav
+    const todayStr = new Date().toISOString().split('T')[0];
+    const overdueCount = (due || []).filter(item => item.due_date < todayStr).length;
+    updateRevisionBadge(overdueCount);
+  } catch(e) {
+    // Revision is non-critical — never block the app over it
+    state.data.revisionDue = [];
+  }
+}
+
+
+window.sendQuick = function(msg) { document.getElementById('chat-input').value=msg; sendChat(); };
+
+// Wire up prefillChatMessage (set by askMentorWith) after render
+function attachPrefill() {
+  if (state.prefillChatMessage && state.page === 'chat') {
+    const el = document.getElementById('chat-input');
+    if (el) { el.value = state.prefillChatMessage; state.prefillChatMessage = null; el.focus(); }
+  }
+}
+
+window.sendChat = async function() {
+  const input=document.getElementById('chat-input'); if(!input)return;
+  const msg=input.value.trim(); if(!msg||state.chatLoading)return;
+  input.value='';
+  state.chatMessages.push({role:'user',content:msg});
+  state.chatLoading=true;
+  render();
+  scrollChat();
+  const r=await post('/api/chat',{student_id:state.student.id,message:msg});
+  state.chatMessages.push({role:'assistant',content:r?.reply||'Sorry, I could not respond. Make sure the server is running.'});
+  state.chatLoading=false;
+  render();
+  scrollChat();
+};
+
+function scrollChat() {
+  setTimeout(()=>{const el=document.getElementById('chat-msgs');if(el)el.scrollTop=el.scrollHeight;},50);
+}
+
+// ── DATA LOADING ──────────────────────────────────────────────────────────────
+// ── DIGITAL TWIN ─────────────────────────────────────────────────────────────
+
+async function loadTwin() {
+  if (!state.student) return;
+  try {
+    const twin = await api(`/api/students/${state.student.id}/twin`);
+    if (twin) state.twin = twin;
+  } catch(e) {
+    // Non-fatal: twin may not exist yet for brand-new students
+    console.warn('Could not load Digital Twin:', e);
+  }
+}
+
+// ── TWIN UI HELPERS ───────────────────────────────────────────────────────────
+
+function buildLockCard(requiredLevel, currentTests, featureName) {
+  const needed = {2: 3, 3: 6, 4: 10}[requiredLevel] || requiredLevel;
+  const more = Math.max(0, needed - currentTests);
+  const total = needed;
+  const done = Math.min(currentTests, total);
+  const pips = Array.from({length: total}, (_, i) =>
+    `<span style="display:inline-block;width:14px;height:14px;border-radius:50%;margin:0 2px;background:${i < done ? 'var(--brand2)' : 'var(--border)'};vertical-align:middle;"></span>`
+  ).join('');
+  return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:center;color:var(--text2);">
+    <div style="font-size:1.5rem;margin-bottom:.5rem">🔒</div>
+    <div style="font-weight:600;color:var(--text1);margin-bottom:.25rem">${featureName}</div>
+    <div style="font-size:.875rem;margin-bottom:.75rem">Take ${more} more test${more !== 1 ? 's' : ''} to unlock</div>
+    <div>${pips}</div>
+  </div>`;
+}
+
+function getTwinUnlockLevel() {
+  return (state.twin && state.twin.unlock_level) || 1;
+}
+
+function getTwinTestCount() {
+  return (state.twin && state.twin.tests_analyzed) || 0;
+}
+
+// Build Twin summary card for use on Dashboard
+function buildTwinSummaryCard() {
+  const twin = state.twin;
+  if (!twin || !twin.tests_analyzed) return '';
+  const level = twin.unlock_level || 1;
+  const n = twin.tests_analyzed || 0;
+  const action = twin.todays_highest_impact_action || '';
+  const sc = twin.scores || {};
+  const bp = twin.behavioral_patterns || {};
+  const rls = twin.rank_leakage_summary || {};
+
+  let html = `<div style="background:linear-gradient(135deg,#1e1b4b,#0f172a);border:1px solid #4c1d95;border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;">
+      <span style="font-size:1.25rem">🧠</span>
+      <span style="font-weight:700;color:#c4b5fd;font-size:1rem">Digital Twin — Level ${level}/4</span>
+      <span style="margin-left:auto;font-size:.75rem;color:#8b5cf6;background:#1e1b4b;padding:.25rem .6rem;border-radius:20px;border:1px solid #4c1d95">${n} test${n !== 1 ? 's' : ''} analyzed</span>
+    </div>`;
+
+  if (action) {
+    html += `<div style="background:#0f172a;border-left:3px solid #7c3aed;padding:.75rem 1rem;border-radius:0 8px 8px 0;margin-bottom:1rem;">
+      <div style="font-size:.7rem;color:#8b5cf6;font-weight:600;margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em">⚡ TODAY'S HIGHEST IMPACT ACTION</div>
+      <div style="color:#e2e8f0;font-size:.875rem;line-height:1.5">${esc(action)}</div>
+    </div>`;
+  }
+
+  if (level >= 2) {
+    const leak = rls.avg_leaked_per_test || 0;
+    const topSrc = rls.top_leakage_source || '—';
+    const panic = bp.panic_fraction ? (bp.panic_fraction * 100).toFixed(0) + '%' : 'none';
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
+      <div style="background:#0f172a;border-radius:8px;padding:.75rem;text-align:center;">
+        <div style="font-size:.7rem;color:#8b5cf6;margin-bottom:.25rem">AVG LEAKED/TEST</div>
+        <div style="font-size:1.25rem;font-weight:700;color:#f87171">${leak.toFixed(1)}</div>
+        <div style="font-size:.65rem;color:#64748b">marks</div>
+      </div>
+      <div style="background:#0f172a;border-radius:8px;padding:.75rem;text-align:center;">
+        <div style="font-size:.7rem;color:#8b5cf6;margin-bottom:.25rem">TOP LEAKAGE</div>
+        <div style="font-size:.9rem;font-weight:700;color:#fbbf24;text-transform:capitalize">${esc(topSrc)}</div>
+      </div>
+      <div style="background:#0f172a;border-radius:8px;padding:.75rem;text-align:center;">
+        <div style="font-size:.7rem;color:#8b5cf6;margin-bottom:.25rem">PANIC RATE</div>
+        <div style="font-size:1.25rem;font-weight:700;color:${bp.panic_fraction > 0.4 ? '#f87171' : '#22d3a0'}">${panic}</div>
+      </div>
+    </div>`;
+  }
+
+  if (level >= 3 && sc.exam_readiness !== null && sc.exam_readiness !== undefined) {
+    const er = sc.exam_readiness;
+    const erColor = er >= 70 ? '#22d3a0' : er >= 50 ? '#fbbf24' : '#f87171';
+    html += `<div style="display:flex;align-items:center;gap:.75rem;">
+      <div style="flex:1;background:#0f172a;border-radius:8px;padding:.5rem .75rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+          <span style="font-size:.75rem;color:#94a3b8">Exam Readiness</span>
+          <span style="font-weight:700;color:${erColor}">${er}/100</span>
+        </div>
+        <div style="background:#1e293b;border-radius:4px;height:6px;">
+          <div style="height:6px;border-radius:4px;background:${erColor};width:${er}%;transition:width .6s"></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if (level < 4) {
+    const needed = level < 2 ? 3 : level < 3 ? 6 : 10;
+    const more = Math.max(0, needed - n);
+    html += `<div style="margin-top:.75rem;font-size:.75rem;color:#64748b;text-align:center">
+      ${more > 0 ? `🔒 ${more} more test${more !== 1 ? 's' : ''} to unlock Level ${level + 1} features` : ''}
+    </div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+async function loadPageData() {
+  if(!state.student) return;
+  const sid = state.student.id;
+  const exam = state.student.exam_target;
+
+  if(!state.chapters.length) {
+    const [chapters, subjects] = await Promise.all([
+      api(`/api/chapters?exam_target=${exam}`),
+      api(`/api/subjects?exam_target=${exam}`)
+    ]);
+    state.chapters = chapters || [];
+    state.subjects = subjects || [];
+  }
+
+  switch(state.page) {
+    case 'rankintel':
+      state.data.rankIntel = await api(`/api/students/${sid}/rank-intel`);
+      break;
+    case 'dashboard':
+      const [dash, recs] = await Promise.all([api(`/api/dashboard/${sid}`), api(`/api/recommendations/${sid}`)]);
+      state.data.dashboard = dash;
+      state.data.recommendations = recs;
+      break;
+    case 'library':
+      const templates = await api(`/api/templates?exam_target=${exam}`) || [];
+      // Fetch each template's question list once to build the difficulty
+      // distribution bar shown on its card; cached on the template object.
+      await Promise.all(templates.map(async t => {
+        const detail = await api(`/api/templates/${t.id}`);
+        if (detail && detail.questions) {
+          const dist = {easy:0, medium:0, hard:0, total:0};
+          detail.questions.forEach(q => { if(dist[q.difficulty]!==undefined){dist[q.difficulty]++; dist.total++;} });
+          t._difficulty = dist;
+        }
+      }));
+      state.data.templates = templates;
+      break;
+    case 'study':
+      state.data.sessions = await api(`/api/study-sessions/${sid}`);
+      break;
+    case 'tests':
+      const [mockTests, liveSessions] = await Promise.all([
+        api(`/api/mock-tests/${sid}`),
+        api(`/api/sessions/student/${sid}`),
+      ]);
+      state.data.tests = mockTests;
+      state.data.liveSessions = (liveSessions || []).sort((a,b) =>
+        new Date(b.submitted_at || b.started_at) - new Date(a.submitted_at || a.started_at));
+      break;
+    case 'performance':
+      const [perfData, trendsData] = await Promise.all([
+        api(`/api/performance/${sid}`),
+        api(`/api/students/${sid}/trends`),
+      ]);
+      state.data.performance = perfData;
+      state.data.trends = trendsData;
+      break;
+    case 'mistakes':
+      state.data.mistakes = await api(`/api/mistakes/${sid}`);
+      break;
+    case 'planner':
+      const [plans, revDue] = await Promise.all([
+        api(`/api/plan/${sid}`),
+        fetch(`${API}/api/revision/${sid}`).then(r => r.ok ? r.json() : []).catch(() => []),
+      ]);
+      state.data.plans = plans;
+      state.data.revisionDue = revDue || [];
+      break;
+    case 'chat':
+      if(!state.chatMessages.length) {
+        state.chatMessages = await api(`/api/chat/history/${sid}`) || [];
+      }
+      break;
+  }
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────────────────
+function attachEvents() {
+  setTimeout(()=>{ initCharts(); attachPrefill(); }, 100);
+}
+
+function initCharts() {
+  if(!window.Chart) return;
+  Chart.defaults.color = '#8888aa';
+  Chart.defaults.borderColor = '#ffffff0f';
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+  if(state.page==='rankintel') {
+    initRankIntelCharts();
+  }
+
+  if(state.page==='dashboard') {
+    const studyEl = document.getElementById('studyChart');
+    if(studyEl && state.data.dashboard) {
+      const raw = (state.data.dashboard.study_by_day||[]).reverse();
+      new Chart(studyEl, { type:'bar', data:{
+        labels: raw.map(r=>r.date?.slice(5)||''),
+        datasets:[{label:'Minutes studied',data:raw.map(r=>r.mins),backgroundColor:'#7c6af550',borderColor:'#7c6af5',borderWidth:2,borderRadius:4}]
+      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}} });
+    }
+  }
+
+  if(state.page==='tests') {
+    const testEl = document.getElementById('testChart');
+    if(testEl && state.data.tests?.length) {
+      const tests = state.data.tests;
+      new Chart(testEl, { type:'line', data:{
+        labels: tests.map(t=>t.date?.slice(5)||''),
+        datasets:[{label:'Score %',data:tests.map(t=>t.percentage),fill:true,backgroundColor:'#22d3a015',borderColor:'#22d3a0',tension:.4,pointBackgroundColor:'#22d3a0',pointRadius:5}]
+      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100}}} });
+    }
+  }
+
+  if(state.page==='review' && state.reviewData) {
+    const flags = state.reviewData.session?.behavioral_flags_json || {};
+    const curve = flags.fatigue?.curve || [];
+    const alloc = flags.section_allocation || {};
+
+    // Tab 1 + Tab 3 both render a fatigue chart (different canvas ids so both can exist)
+    ['reviewFatigueChart', 'reviewFatigueChart2'].forEach(id => {
+      const el = document.getElementById(id);
+      const key = '_'+id;
+      if (window[key]) { window[key].destroy(); window[key] = null; }
+      if (el && curve.length) {
+        window[key] = new Chart(el, { type:'line', data:{
+          labels: curve.map(w => `${w.window_start_mins}-${w.window_end_mins}m`),
+          datasets:[{label:'Accuracy %',data:curve.map(w=>w.accuracy),spanGaps:true,fill:true,backgroundColor:'#7c6af518',borderColor:'#7c6af5',tension:.3,pointBackgroundColor:'#7c6af5',pointRadius:4}]
+        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100}}} });
+      }
+    });
+
+    const sectionEl = document.getElementById('reviewSectionChart');
+    if (window._reviewSectionChart) { window._reviewSectionChart.destroy(); window._reviewSectionChart = null; }
+    if (sectionEl && Object.keys(alloc).length) {
+      const names = Object.keys(alloc);
+      window._reviewSectionChart = new Chart(sectionEl, { type:'bar', data:{
+        labels: names,
+        datasets:[
+          {label:'Actual mins', data:names.map(n=>alloc[n].actual_mins), backgroundColor:'#7c6af580', borderRadius:4},
+          {label:'Optimal mins', data:names.map(n=>alloc[n].optimal_mins), backgroundColor:'#22d3a080', borderRadius:4},
+        ]
+      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}} });
+    }
+  }
+
+  if(state.page==='performance' && state.perfTab==='trends' && state.data.trends?.sufficient_data) {
+    const t = state.data.trends;
+
+    const scoreEl = document.getElementById('trendScoreChart');
+    if (window._trendScoreChart) window._trendScoreChart.destroy();
+    if (scoreEl) {
+      window._trendScoreChart = new Chart(scoreEl, { type:'line', data:{
+        labels: t.score_trend.map(p=>p.date?.slice(5)||''),
+        datasets:[
+          {label:'Score %', data:t.score_trend.map(p=>p.percentage), borderColor:'#22d3a0', backgroundColor:'#22d3a015', fill:true, tension:.3, pointRadius:4},
+          {label:'Trend', data:t.score_trendline, borderColor:'#7c6af5', borderDash:[6,4], pointRadius:0, fill:false},
+        ]
+      }, options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100}}} });
+    }
+
+    const leakEl = document.getElementById('trendLeakageChart');
+    if (window._trendLeakageChart) window._trendLeakageChart.destroy();
+    if (leakEl) {
+      window._trendLeakageChart = new Chart(leakEl, { type:'bar', data:{
+        labels: t.leakage_trend.map(p=>p.date?.slice(5)||''),
+        datasets:[{label:'Marks leaked', data:t.leakage_trend.map(p=>p.total_leaked), backgroundColor:'#f8717180', borderRadius:4}]
+      }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}} });
+    }
+
+    const mistakeEl = document.getElementById('trendMistakeChart');
+    if (window._trendMistakeChart) window._trendMistakeChart.destroy();
+    if (mistakeEl) {
+      const MISTAKE_COLORS = {conceptual:'#f87171',calculation:'#fbbf24',time_pressure:'#a78bfa',guessing:'#94a3b8',careless:'#fb923c',avoidance:'#ef4444',formula_recall:'#60a5fa',misread:'#34d399',unclassified:'#64748b'};
+      const types = Object.keys(t.mistake_evolution[0]?.percentages || {});
+      window._trendMistakeChart = new Chart(mistakeEl, { type:'line', data:{
+        labels: t.mistake_evolution.map(p=>p.date?.slice(5)||''),
+        datasets: types.map(type => ({
+          label: MISTAKE_TYPE_LABELS[type] || type,
+          data: t.mistake_evolution.map(p=>p.percentages[type]||0),
+          borderColor: MISTAKE_COLORS[type]||'#94a3b8', backgroundColor:(MISTAKE_COLORS[type]||'#94a3b8')+'40',
+          fill:true, tension:.3, pointRadius:2,
+        }))
+      }, options:{responsive:true,maintainAspectRatio:false,scales:{y:{stacked:true,min:0,max:100},x:{stacked:true}},plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}} });
+    }
+  }
+
+  if(state.page==='performance') {
+    const perfEl = document.getElementById('perfChart');
+    if(perfEl && state.data.performance?.length) {
+      // Phase 7 fix: filter chart to the currently selected subject tab
+      // (defaults to Physics, set in buildPerformance()/setHeatmapSubject())
+      const activeSubject = state.heatmapSubject;
+      const subjectPerf = activeSubject
+        ? state.data.performance.filter(p => p.subject_name === activeSubject)
+        : state.data.performance;
+      const perf = subjectPerf.slice(0, 12);
+      if (perf.length) {
+        new Chart(perfEl, { type:'bar', data:{
+          labels: perf.map(p=>p.chapter_name?.substring(0,18)),
+          datasets:[{label:'Accuracy %',data:perf.map(p=>Math.round(p.accuracy*100)),backgroundColor:perf.map(p=>p.accuracy<0.4?'#f8717180':p.accuracy<0.65?'#fbbf2480':'#22d3a080'),borderRadius:6}]
+        }, options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{min:0,max:100}}} });
+      }
+    }
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  if(state.student) {
+    // Phase 4: load Digital Twin on startup so dashboard shows it immediately
+    await loadTwin();
+    await loadRevisionCount();  // Phase 7: load revision queue count for nav badge
+    await loadPageData();
+  }
+  render();
+}
+init();
+</script>
+</body>
+</html>
